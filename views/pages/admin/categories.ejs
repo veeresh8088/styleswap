@@ -1,0 +1,104 @@
+<%- include('../../partials/header') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  
+  <div class="flex flex-col lg:flex-row gap-8">
+    <%- include('../../partials/admin-sidebar') %>
+
+    <div class="flex-1 space-y-8">
+      
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Catalog Management</span>
+          <h1 class="font-display text-2xl font-extrabold text-gray-900">Fashion & Wear Categories</h1>
+        </div>
+
+        <button type="button" onclick="openModal('add-category-modal')" class="px-4 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto shadow-xs">
+          <i data-lucide="plus" class="w-4 h-4 text-amber-400"></i> + Add Category
+        </button>
+      </div>
+
+      <!-- Categories Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% if (categories && categories.length > 0) { %>
+          <% categories.forEach(cat => { %>
+            <div class="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs space-y-4 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-12 h-12 rounded-2xl bg-gray-100 text-gray-800 flex items-center justify-center">
+                    <i data-lucide="tag" class="w-6 h-6"></i>
+                  </div>
+                  <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800">
+                    <%= cat.itemCount || 0 %> items
+                  </span>
+                </div>
+                <h3 class="font-display font-bold text-gray-900 text-lg"><%= cat.name %></h3>
+                <p class="text-xs font-mono text-gray-400 mt-0.5">slug: <%= cat.slug %></p>
+                <p class="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-2"><%= cat.description || 'No description provided.' %></p>
+              </div>
+
+              <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+                <a href="/listings?category=<%= cat.slug %>" target="_blank" class="text-xs font-bold text-indigo-600 hover:text-indigo-800">
+                  View in Catalog →
+                </a>
+                <div class="flex items-center space-x-1">
+                  <form action="/admin/categories/<%= cat._id %>/delete" method="POST" onsubmit="return confirm('Delete this category?');">
+                    <button type="submit" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg" title="Delete">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="col-span-full py-12 text-center text-gray-500">
+            No categories defined yet.
+          </div>
+        <% } %>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Category Modal -->
+<div id="add-category-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-200">
+    
+    <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+      <h3 class="font-display font-bold text-xl text-gray-900 flex items-center gap-2">
+        <i data-lucide="folder-plus" class="w-5 h-5 text-gray-900"></i> Add New Category
+      </h3>
+      <button type="button" onclick="closeModal('add-category-modal')" class="text-gray-400 hover:text-gray-600 p-1">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <form action="/admin/categories" method="POST" class="mt-5 space-y-4">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Category Name <span class="text-rose-500">*</span></label>
+        <input type="text" name="name" required placeholder="e.g. Vintage Leather Jackets" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm text-gray-900">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Description</label>
+        <textarea name="description" rows="3" placeholder="Brief summary of items in this category..." class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900"></textarea>
+      </div>
+
+      <div class="pt-4 flex items-center justify-end space-x-3">
+        <button type="button" onclick="closeModal('add-category-modal')" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+          Cancel
+        </button>
+        <button type="submit" class="px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white text-sm font-bold shadow-md">
+          Create Category
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

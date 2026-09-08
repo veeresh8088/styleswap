@@ -1,0 +1,122 @@
+/* Smart Wear Exchange - Custom Light-Themed Thai Marketplace Styling */
+
+:root {
+  --primary-gold: #D4AF37;
+  --primary-gold-dark: #B8860B;
+  --thai-silk-cream: #FDFCF7;
+  --thai-sand: #F4EFE6;
+  --thai-terracotta: #C86D51;
+  --thai-lotus: #D98282;
+  --thai-emerald: #3B7A57;
+  --thai-charcoal: #1F2937;
+  --thai-muted: #6B7280;
+  --thai-card-bg: #FFFFFF;
+  --thai-border: #E5E7EB;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--thai-silk-cream);
+  color: var(--thai-charcoal);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+/* Thai Font Decorative Headings */
+.font-display {
+  font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
+}
+
+/* Light Card Shadows */
+.thai-card {
+  background: #ffffff;
+  border: 1px solid #F0ECE1;
+  box-shadow: 0 4px 20px -2px rgba(184, 134, 11, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.thai-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px -4px rgba(184, 134, 11, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+  border-color: #E2D7C3;
+}
+
+/* Subtle Traditional Thai Pattern Accent */
+.thai-pattern-bg {
+  background-color: #FAF6EE;
+  background-image: radial-gradient(#D4AF37 0.75px, transparent 0.75px), radial-gradient(#D4AF37 0.75px, #FAF6EE 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+/* Custom Gold Gradient Buttons */
+.btn-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #C59B27 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(212, 175, 55, 0.25);
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #C59B27 0%, #B8860B 100%);
+  box-shadow: 0 4px 14px rgba(184, 134, 11, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-emerald {
+  background: linear-gradient(135deg, #3B7A57 0%, #2D5E43 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-emerald:hover {
+  background: linear-gradient(135deg, #2D5E43 0%, #1F422E 100%);
+}
+
+/* Badge Styling */
+.badge-sell {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.badge-exchange {
+  background-color: #E0E7FF;
+  color: #3730A3;
+  border: 1px solid #C7D2FE;
+}
+
+.badge-both {
+  background-color: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+/* Image Aspect Ratio Gallery */
+.aspect-product {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F4EFE6;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4C5B0;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8A58D;
+}

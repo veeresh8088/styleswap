@@ -1,0 +1,61 @@
+<% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
+  <%
+    function getPageUrl(targetPage) {
+      const q = typeof query !== 'undefined' ? { ...query } : {};
+      q.page = targetPage;
+      const searchParams = new URLSearchParams();
+      for (const [key, value] of Object.entries(q)) {
+        if (value !== undefined && value !== null && value !== '') {
+          searchParams.set(key, value);
+        }
+      }
+      return '?' + searchParams.toString();
+    }
+  %>
+  <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-2xl shadow-sm mt-8">
+    <div class="flex flex-1 justify-between sm:hidden">
+      <% if (pagination.page > 1) { %>
+        <a href="<%= getPageUrl(pagination.page - 1) %>" class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Previous</a>
+      <% } else { %>
+        <span class="relative inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-400">Previous</span>
+      <% } %>
+      <% if (pagination.page < pagination.totalPages) { %>
+        <a href="<%= getPageUrl(pagination.page + 1) %>" class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Next</a>
+      <% } else { %>
+        <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-400">Next</span>
+      <% } %>
+    </div>
+    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+      <div>
+        <p class="text-sm text-gray-600">
+          Showing page <span class="font-semibold text-gray-900"><%= pagination.page %></span> of <span class="font-semibold text-gray-900"><%= pagination.totalPages %></span> (<span class="font-semibold text-gray-900"><%= pagination.total %></span> total items in ₹)
+        </p>
+      </div>
+      <div>
+        <nav class="isolate inline-flex -space-x-px rounded-md shadow-xs" aria-label="Pagination">
+          <% if (pagination.page > 1) { %>
+            <a href="<%= getPageUrl(pagination.page - 1) %>" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </a>
+          <% } %>
+
+          <% for (let p = 1; p <= pagination.totalPages; p++) { %>
+            <% if (p === pagination.page) { %>
+              <span class="relative z-10 inline-flex items-center bg-gray-900 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"><%= p %></span>
+            <% } else if (p <= 3 || p >= pagination.totalPages - 2 || Math.abs(p - pagination.page) <= 1) { %>
+              <a href="<%= getPageUrl(p) %>" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"><%= p %></a>
+            <% } else if (p === 4 && pagination.page > 5) { %>
+              <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">...</span>
+            <% } %>
+          <% } %>
+
+          <% if (pagination.page < pagination.totalPages) { %>
+            <a href="<%= getPageUrl(pagination.page + 1) %>" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </a>
+          <% } %>
+        </nav>
+      </div>
+    </div>
+  </div>
+<% } %>

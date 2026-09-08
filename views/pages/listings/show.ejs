@@ -1,0 +1,717 @@
+<%- include('../../partials/header') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  
+  <!-- Breadcrumb -->
+  <div class="flex items-center space-x-2 text-xs font-semibold text-gray-500 mb-6">
+    <a href="/" class="hover:text-gray-900">Home</a>
+    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+    <a href="/listings" class="hover:text-gray-900">Thrift Market</a>
+    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+    <a href="/listings?category=<%= listing.category.slug %>" class="hover:text-gray-900"><%= listing.category.name %></a>
+    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+    <span class="text-gray-900 truncate max-w-[200px]"><%= listing.title %></span>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+    
+    <!-- Image Gallery (Left Column) -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="bg-white rounded-3xl p-3 border border-gray-200 shadow-xs overflow-hidden">
+        <div class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100">
+          <img 
+            id="main-product-image"
+            src="<%= listing.images && listing.images.length > 0 ? listing.images[0] : '/images/placeholder-item.jpg' %>" 
+            alt="<%= listing.title %>" 
+            class="w-full h-full object-cover"
+            onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+          >
+
+          <!-- Listing Status Overlay -->
+          <% if (listing.status !== 'approved') { %>
+            <div class="absolute top-4 right-4 bg-rose-600 text-white font-bold text-xs px-3 py-1.5 rounded-full uppercase tracking-wider shadow">
+              <%= listing.status %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Thumbnail Selector -->
+      <% if (listing.images && listing.images.length > 1) { %>
+        <div class="flex items-center space-x-3 overflow-x-auto pb-2">
+          <% listing.images.forEach((img, idx) => { %>
+            <button 
+              type="button" 
+              onclick="document.getElementById('main-product-image').src='<%= img %>'"
+              class="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-gray-900 focus:border-gray-900 transition-all bg-gray-100"
+            >
+              <img src="<%= img %>" alt="Thumbnail <%= idx + 1 %>" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
+            </button>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Product Info & Action Box (Right Column) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs space-y-6">
+        
+        <!-- Header & Badges -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+              <%= listing.category.name %>
+            </span>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                <i data-lucide="ruler" class="w-3 h-3 text-indigo-600"></i> <%= listing.size || 'Free Size' %>
+              </span>
+              <span class="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                <%= listing.condition %>
+              </span>
+              <span class="text-xs text-gray-400 flex items-center gap-1">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i> <%= listing.viewsCount || 0 %>
+              </span>
+            </div>
+          </div>
+
+          <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-gray-900 leading-snug">
+            <%= listing.title %>
+          </h1>
+
+          <div class="flex items-center text-xs text-gray-500 space-x-4">
+            <span class="flex items-center gap-1">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-gray-500"></i> <%= listing.location || 'India' %>
+            </span>
+            <span>•</span>
+            <span>Listed <%= new Date(listing.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+          </div>
+        </div>
+
+        <!-- Size & Fit Specifications Card -->
+        <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/80 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-900">
+              <i data-lucide="ruler" class="w-4 h-4 text-indigo-600"></i>
+              <span>Size & Fit Details</span>
+            </div>
+            <span class="px-3 py-1 rounded-lg bg-white border border-indigo-200 text-xs font-extrabold text-indigo-950 shadow-2xs">
+              <%= listing.size || 'Free Size / Standard' %>
+            </span>
+          </div>
+          <% if (listing.measurements) { %>
+            <div class="text-xs text-gray-800 bg-white/90 p-2.5 rounded-xl border border-indigo-100 leading-relaxed font-mono">
+              <span class="font-bold block text-[10px] uppercase tracking-wider text-indigo-600 mb-0.5">Flat-Lay Measurements:</span>
+              <%= listing.measurements %>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Pricing & Exchange Availability Box -->
+        <div class="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs text-gray-500 block font-medium">Price in Indian Rupees</span>
+              <% if (listing.type === 'exchange') { %>
+                <span class="text-2xl font-bold text-indigo-700">Open for Swap Only</span>
+              <% } else { %>
+                <span class="text-3xl font-extrabold text-gray-900">₹<%= Number(listing.price).toLocaleString('en-IN') %></span>
+                <% if (listing.type === 'both') { %>
+                  <span class="text-xs text-indigo-700 font-bold ml-2">(or Open for Swap)</span>
+                <% } %>
+              <% } %>
+            </div>
+
+            <!-- Badges -->
+            <% if (listing.type === 'exchange') { %>
+              <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full">Trade Only</span>
+            <% } else if (listing.type === 'both') { %>
+              <span class="bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full">Buy / Swap</span>
+            <% } else { %>
+              <span class="bg-gray-200 text-gray-800 text-xs font-bold px-3 py-1 rounded-full">For Sale</span>
+            <% } %>
+          </div>
+
+          <% if (listing.exchangePreferences) { %>
+            <div class="pt-3 border-t border-gray-200 text-xs text-gray-700">
+              <span class="font-bold text-gray-900 block mb-1">Seller's Swap Wishlist:</span>
+              <p class="italic text-gray-600">"<%= listing.exchangePreferences %>"</p>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Action CTAs -->
+        <div class="space-y-3 pt-2">
+          <% if (!isOwner) { %>
+            <% if (listing.status === 'approved') { %>
+              
+              <!-- Direct Buy Button -->
+              <% if (listing.type === 'sell' || listing.type === 'both') { %>
+                <% if (currentUser) { %>
+                  <a 
+                    href="/checkout/<%= listing._id %>"
+                    class="w-full py-3.5 rounded-2xl bg-gray-900 hover:bg-black text-white text-base font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+                  >
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    Buy Direct (₹<%= Number(listing.price).toLocaleString('en-IN') %>)
+                  </a>
+                <% } else { %>
+                  <a 
+                    href="/auth/login?redirect=/checkout/<%= listing._id %>" 
+                    class="w-full py-3.5 rounded-2xl bg-gray-900 hover:bg-black text-white text-base font-bold flex items-center justify-center gap-2"
+                  >
+                    <i data-lucide="log-in" class="w-5 h-5"></i>
+                    Sign in to Buy (₹<%= Number(listing.price).toLocaleString('en-IN') %>)
+                  </a>
+                <% } %>
+              <% } %>
+
+              <!-- Propose Exchange / Barter Button (Available on all thrift pieces) -->
+              <% if (currentUser) { %>
+                <button 
+                  type="button" 
+                  onclick="openModal('exchange-modal')"
+                  class="w-full py-3.5 rounded-2xl bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-100 text-indigo-900 text-base font-bold flex items-center justify-center gap-2 transition-colors shadow-xs hover:shadow"
+                >
+                  <i data-lucide="repeat" class="w-5 h-5 text-indigo-600"></i>
+                  Propose Item Swap / Barter
+                </button>
+              <% } else { %>
+                <a 
+                  href="/auth/login?redirect=/listings/<%= listing._id %>" 
+                  class="w-full py-3.5 rounded-2xl bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-100 text-indigo-900 text-base font-bold flex items-center justify-center gap-2 transition-colors"
+                >
+                  <i data-lucide="log-in" class="w-5 h-5 text-indigo-600"></i>
+                  Sign in to Propose Swap
+                </a>
+              <% } %>
+
+              <!-- Cash Buy Option for Exchange-Only Listings -->
+              <% if (listing.type === 'exchange') { %>
+                <% if (currentUser) { %>
+                  <a 
+                    href="/checkout/<%= listing._id %>"
+                    class="w-full py-3 rounded-2xl bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 text-emerald-950 text-sm font-bold flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <i data-lucide="banknote" class="w-4 h-4 text-emerald-700"></i>
+                    Make Instant Cash Purchase (₹<%= Number(listing.price).toLocaleString('en-IN') %>)
+                  </a>
+                <% } else { %>
+                  <a 
+                    href="/auth/login?redirect=/checkout/<%= listing._id %>"
+                    class="w-full py-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-sm font-bold flex items-center justify-center gap-2"
+                  >
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                    Sign in to Buy with Cash (₹<%= Number(listing.price).toLocaleString('en-IN') %>)
+                  </a>
+                <% } %>
+              <% } %>
+
+            <% } else { %>
+              <div class="p-4 rounded-2xl bg-gray-100 text-center text-gray-500 font-semibold text-sm">
+                This item is <%= listing.status %> and no longer available.
+              </div>
+            <% } %>
+
+          <% } else { %>
+            <!-- Owner Control Panel -->
+            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-3">
+              <p class="text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> You own this listing
+              </p>
+              <div class="flex items-center gap-3">
+                <a href="/listings/<%= listing._id %>/edit" class="flex-1 py-2.5 text-center bg-white border border-gray-300 rounded-xl text-xs font-bold text-gray-900 hover:bg-gray-100 transition-colors">
+                  Edit Item
+                </a>
+                <form action="/listings/<%= listing._id %>/delete" method="POST" class="flex-1" onsubmit="return confirm('Delete this listing?');">
+                  <button type="submit" class="w-full py-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors">
+                    Delete
+                  </button>
+                </form>
+              </div>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Seller Profile Card -->
+        <div class="pt-6 border-t border-gray-100 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <img src="<%= listing.sellerId.profileImage || '/images/default-avatar.png' %>" alt="<%= listing.sellerId.name %>" class="w-12 h-12 rounded-full object-cover border border-gray-200">
+            <div>
+              <h4 class="text-sm font-bold text-gray-900"><%= listing.sellerId.name %></h4>
+              <p class="text-xs text-gray-500"><%= listing.location || 'India' %></p>
+            </div>
+          </div>
+          <a href="/user/<%= listing.sellerId._id %>/profile" class="text-xs font-bold text-gray-900 hover:text-black border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+            View Closet
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Full Description Section -->
+    <div class="lg:col-span-12">
+      <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xs space-y-6">
+        <h3 class="font-display text-xl font-bold text-gray-900 border-b border-gray-100 pb-4">
+          Second-Hand Condition & Fit Details
+        </h3>
+        <div class="prose max-w-none text-gray-700 text-sm sm:text-base leading-relaxed whitespace-pre-line">
+          <%= listing.description %>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Related Listings in Same Category -->
+  <% if (relatedListings && relatedListings.length > 0) { %>
+    <div class="mt-16 pt-12 border-t border-gray-200">
+      <h3 class="font-display text-2xl font-bold text-gray-900 mb-8">Related Items in <%= listing.category.name %></h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <% relatedListings.forEach(item => { %>
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col group hover:shadow-md transition-all">
+            <a href="/listings/<%= item._id %>" class="relative block overflow-hidden aspect-[4/3] bg-gray-100">
+              <img 
+                src="<%= item.images && item.images.length > 0 ? item.images[0] : '/images/placeholder-item.jpg' %>" 
+                alt="<%= item.title %>" 
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+              >
+            </a>
+            <div class="p-4 flex-1 flex flex-col justify-between">
+              <a href="/listings/<%= item._id %>" class="font-bold text-gray-900 text-sm hover:text-indigo-600 transition-colors line-clamp-1">
+                <%= item.title %>
+              </a>
+              <div class="flex items-center justify-between pt-2 mt-2 border-t border-gray-100">
+                <span class="text-sm font-extrabold text-gray-900">₹<%= Number(item.price).toLocaleString('en-IN') %></span>
+                <a href="/listings/<%= item._id %>" class="text-xs font-semibold text-gray-700 hover:text-black">View</a>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+</div>
+
+<!-- 1. BUY CONFIRMATION MODAL -->
+<% if (currentUser && !isOwner) { %>
+  <div id="buy-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+        <h3 class="font-display font-bold text-xl text-gray-900 flex items-center gap-2">
+          <i data-lucide="shopping-bag" class="w-5 h-5 text-gray-900"></i> Checkout Order
+        </h3>
+        <button type="button" onclick="closeModal('buy-modal')" class="text-gray-400 hover:text-gray-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form action="/transactions/buy" method="POST" class="mt-5 space-y-4">
+        <input type="hidden" name="listingId" value="<%= listing._id %>">
+
+        <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-gray-500">Selected Item</p>
+            <p class="font-bold text-gray-900 text-sm"><%= listing.title %></p>
+          </div>
+          <span class="text-xl font-extrabold text-gray-900">₹<%= Number(listing.price).toLocaleString('en-IN') %></span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Delivery Address in India</label>
+          <textarea 
+            name="deliveryAddress" 
+            rows="3" 
+            required
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900"
+            placeholder="Recipient Name, House/Flat No, Street, Landmark, City, State, PIN Code, Phone..."
+          ><%= currentUser.formattedAddress || '' %></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Note to Seller (Optional)</label>
+          <input 
+            type="text" 
+            name="notes" 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-sm"
+            placeholder="Courier preferences, packaging notes..."
+          >
+        </div>
+
+        <div class="pt-4 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeModal('buy-modal')" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white text-sm font-bold shadow-md">
+            Complete Order (₹<%= Number(listing.price).toLocaleString('en-IN') %>)
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+<% } %>
+
+<!-- 2. PROPOSE EXCHANGE MODAL -->
+<% if (currentUser && !isOwner) { %>
+  <div id="exchange-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-gray-100 flex-shrink-0">
+        <div>
+          <h3 class="font-display font-bold text-xl text-gray-900 flex items-center gap-2">
+            <i data-lucide="repeat" class="w-5 h-5 text-indigo-600"></i> Propose Wardrobe Swap
+          </h3>
+          <p class="text-xs text-gray-500 mt-1">Trading for: <span class="font-bold text-gray-900">"<%= listing.title %>"</span> (<%= listing.size || 'Standard' %>)</p>
+        </div>
+        <button type="button" onclick="closeModal('exchange-modal')" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Mode Switcher Tabs (if user has existing items) -->
+      <% const hasItems = userExchangeableItems && userExchangeableItems.length > 0; %>
+      <div class="flex items-center space-x-2 pt-3 pb-1 border-b border-gray-100 flex-shrink-0">
+        <% if (hasItems) { %>
+          <button 
+            type="button" 
+            id="tab-btn-closet" 
+            onclick="switchSwapTab('closet')"
+            class="px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-200 transition-all flex items-center gap-1.5"
+          >
+            <i data-lucide="shirt" class="w-3.5 h-3.5 text-indigo-600"></i>
+            From My Wardrobe (<%= userExchangeableItems.length %>)
+          </button>
+        <% } %>
+        <button 
+          type="button" 
+          id="tab-btn-quick" 
+          onclick="switchSwapTab('quick')"
+          class="px-4 py-2 text-xs font-bold rounded-xl <%= hasItems ? 'bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100' : 'bg-indigo-50 text-indigo-900 border border-indigo-200' %> transition-all flex items-center gap-1.5"
+        >
+          <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-indigo-600"></i>
+          <%= hasItems ? 'Offer Another Item from Closet' : 'Offer Item from Your Closet' %>
+        </button>
+      </div>
+
+      <!-- Form Container -->
+      <form action="/transactions/exchange" method="POST" id="swap-proposal-form" class="mt-4 space-y-4 flex-1 overflow-y-auto pr-1">
+        <input type="hidden" name="listingId" value="<%= listing._id %>">
+        <input type="hidden" name="exchangeItemId" id="selected-exchange-item-id" value="">
+
+        <!-- PANE 1: Choose From Existing Wardrobe (if user has items) -->
+        <% if (hasItems) { %>
+          <div id="pane-swap-closet" class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                1. Select Item to Barter:
+              </label>
+              <span id="selected-item-indicator" class="hidden text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i> Selected
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-52 overflow-y-auto p-1 border border-gray-100 rounded-2xl bg-gray-50/50">
+              <% userExchangeableItems.forEach(myItem => { %>
+                <div 
+                  id="card-item-<%= myItem._id %>"
+                  data-item-id="<%= myItem._id %>"
+                  onclick="selectExchangeItem(this, '<%= myItem._id %>', '<%= myItem.title.replace(/'/g, "\\'") %>')"
+                  class="exchange-select-card cursor-pointer p-3 rounded-2xl border border-gray-200 bg-white hover:border-indigo-400 hover:shadow-xs flex items-center space-x-3 transition-all relative group"
+                >
+                  <img 
+                    src="<%= myItem.images && myItem.images.length > 0 ? myItem.images[0] : '/images/placeholder-item.jpg' %>" 
+                    alt="<%= myItem.title %>" 
+                    class="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-gray-200" 
+                    onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+                  >
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors"><%= myItem.title %></p>
+                    <p class="text-[11px] text-gray-500"><%= myItem.size || 'Standard' %> • <%= myItem.condition %></p>
+                    <p class="text-xs font-extrabold text-gray-900 mt-0.5">Value: ₹<%= Number(myItem.price).toLocaleString('en-IN') %></p>
+                  </div>
+                  <div class="selection-check hidden absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                    <i data-lucide="check" class="w-3 h-3"></i>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- PANE 2: Quick Offer Form (for users without items OR wishing to offer unlisted piece) -->
+        <div id="pane-swap-quick" class="<%= hasItems ? 'hidden' : '' %> space-y-3">
+          <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-100 flex items-start gap-2.5">
+            <i data-lucide="sparkles" class="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0"></i>
+            <p class="text-xs text-indigo-950 leading-relaxed">
+              Describe the pre-loved garment or footwear you want to offer in trade. We will automatically create the item in your wardrobe and send the barter offer!
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+              Item Title / Name <span class="text-rose-500">*</span>
+            </label>
+            <input 
+              type="text" 
+              name="offerTitle" 
+              id="offer-title-input"
+              placeholder="e.g. Vintage Levi's 501 Straight Jeans (Waist 32) or Oversized Hoodie..." 
+              oninput="checkQuickOfferValidity()"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            >
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Category</label>
+              <select name="offerCategory" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                <% if (typeof categories !== 'undefined' && categories && categories.length > 0) { %>
+                  <% categories.forEach(cat => { %>
+                    <option value="<%= cat._id %>" <%= cat._id.toString() === listing.category._id.toString() ? 'selected' : '' %>>
+                      <%= cat.name %>
+                    </option>
+                  <% }) %>
+                <% } else { %>
+                  <option value="<%= listing.category._id %>"><%= listing.category.name %></option>
+                <% } %>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Size</label>
+              <select name="offerSize" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                <option value="S">S</option>
+                <option value="M" selected>M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+                <option value="30">Waist 30</option>
+                <option value="32">Waist 32</option>
+                <option value="34">Waist 34</option>
+                <option value="UK 8">UK 8</option>
+                <option value="UK 9">UK 9</option>
+                <option value="UK 10">UK 10</option>
+                <option value="Free Size / Standard">Free Size / Standard</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Condition</label>
+              <select name="offerCondition" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                <option value="Like New (Barely Worn)">Like New</option>
+                <option value="Gently Used (Good Condition)" selected>Gently Used</option>
+                <option value="Thrifted / Vintage Fade">Thrifted / Vintage</option>
+                <option value="Well Worn (Minor Flaws)">Well Worn</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Estimated Item Valuation (₹)</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">₹</span>
+              <input 
+                type="number" 
+                name="offerPrice" 
+                id="offer-price-input"
+                min="0"
+                placeholder="<%= listing.price || 999 %>" 
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-3.5 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Cash Difference / Top-Up (₹) (Common to both modes) -->
+        <div class="bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+              <i data-lucide="banknote" class="w-4 h-4 text-emerald-600"></i>
+              Add Cash Difference / Top-Up (₹)
+            </label>
+            <span class="text-[10px] font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-full border border-indigo-200">Optional</span>
+          </div>
+          <p class="text-[11px] text-gray-600">
+            Offering a lower value item? Add extra cash in ₹ to balance the exchange.
+          </p>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-500">₹</span>
+            <input 
+              type="number" 
+              name="cashTopUp" 
+              id="cash-topup-input"
+              min="0" 
+              step="50"
+              placeholder="0 (Pure Item Barter)" 
+              class="w-full bg-white border border-gray-200 rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            >
+          </div>
+          <div class="flex items-center gap-2 pt-0.5">
+            <span class="text-[11px] font-semibold text-gray-500">Quick add:</span>
+            <button type="button" onclick="document.getElementById('cash-topup-input').value = 200" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-100">+₹200</button>
+            <button type="button" onclick="document.getElementById('cash-topup-input').value = 500" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-100">+₹500</button>
+            <button type="button" onclick="document.getElementById('cash-topup-input').value = 1000" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-100">+₹1,000</button>
+            <button type="button" onclick="document.getElementById('cash-topup-input').value = ''" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-gray-200 text-gray-400 hover:text-gray-600">Clear</button>
+          </div>
+        </div>
+
+        <!-- Note to Owner -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Note to Owner (Optional)</label>
+          <textarea 
+            name="notes" 
+            rows="2" 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            placeholder="Tell the seller why this is a great swap, fit/sizing details, courier preferences..."
+          ></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="pt-3 flex items-center justify-end space-x-3 flex-shrink-0 border-t border-gray-100">
+          <button type="button" onclick="closeModal('exchange-modal')" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button 
+            id="submit-exchange-btn" 
+            type="submit" 
+            <%= hasItems ? 'disabled' : 'disabled' %>
+            class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold shadow-md transition-colors flex items-center gap-1.5"
+          >
+            <i data-lucide="repeat" class="w-4 h-4"></i>
+            <span id="submit-exchange-btn-text">Send Swap Offer</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Bulletproof Swap Modal Script -->
+  <script>
+    // Fail-safe Modal Open/Close
+    window.openModal = function(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        if (window.lucide) window.lucide.createIcons();
+      }
+    };
+
+    window.closeModal = function(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+        document.body.style.overflow = 'auto';
+      }
+    };
+
+    // Tab Switcher between Closet Items & Quick Offer
+    window.switchSwapTab = function(mode) {
+      const paneCloset = document.getElementById('pane-swap-closet');
+      const paneQuick = document.getElementById('pane-swap-quick');
+      const btnCloset = document.getElementById('tab-btn-closet');
+      const btnQuick = document.getElementById('tab-btn-quick');
+      const hiddenItemId = document.getElementById('selected-exchange-item-id');
+      const submitBtn = document.getElementById('submit-exchange-btn');
+      const submitBtnText = document.getElementById('submit-exchange-btn-text');
+
+      if (mode === 'closet' && paneCloset) {
+        paneCloset.classList.remove('hidden');
+        if (paneQuick) paneQuick.classList.add('hidden');
+        if (btnCloset) {
+          btnCloset.className = 'px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-200 transition-all flex items-center gap-1.5';
+        }
+        if (btnQuick) {
+          btnQuick.className = 'px-4 py-2 text-xs font-bold rounded-xl bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100 transition-all flex items-center gap-1.5';
+        }
+        // Check if an item is currently selected
+        if (hiddenItemId && hiddenItemId.value) {
+          submitBtn.disabled = false;
+        } else {
+          submitBtn.disabled = true;
+          submitBtnText.textContent = 'Select an Item to Swap';
+        }
+      } else if (mode === 'quick' && paneQuick) {
+        paneQuick.classList.remove('hidden');
+        if (paneCloset) paneCloset.classList.add('hidden');
+        if (btnQuick) {
+          btnQuick.className = 'px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-200 transition-all flex items-center gap-1.5';
+        }
+        if (btnCloset) {
+          btnCloset.className = 'px-4 py-2 text-xs font-bold rounded-xl bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100 transition-all flex items-center gap-1.5';
+        }
+        checkQuickOfferValidity();
+      }
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    // Item Selection Handler
+    window.selectExchangeItem = function(cardEl, itemId, itemTitle) {
+      // Remove active state from all cards
+      document.querySelectorAll('.exchange-select-card').forEach(function(c) {
+        c.classList.remove('border-indigo-600', 'ring-2', 'ring-indigo-500/30', 'bg-indigo-50/50');
+        c.classList.add('border-gray-200', 'bg-white');
+        const checkIcon = c.querySelector('.selection-check');
+        if (checkIcon) checkIcon.classList.add('hidden');
+      });
+
+      // Highlight selected card
+      if (cardEl) {
+        cardEl.classList.remove('border-gray-200', 'bg-white');
+        cardEl.classList.add('border-indigo-600', 'ring-2', 'ring-indigo-500/30', 'bg-indigo-50/50');
+        const checkIcon = cardEl.querySelector('.selection-check');
+        if (checkIcon) checkIcon.classList.remove('hidden');
+      }
+
+      // Update hidden input
+      const hiddenInput = document.getElementById('selected-exchange-item-id');
+      if (hiddenInput) {
+        hiddenInput.value = itemId;
+      }
+
+      // Show indicator badge
+      const indicator = document.getElementById('selected-item-indicator');
+      if (indicator) indicator.classList.remove('hidden');
+
+      // Enable submit button
+      const submitBtn = document.getElementById('submit-exchange-btn');
+      const submitBtnText = document.getElementById('submit-exchange-btn-text');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        if (submitBtnText) {
+          submitBtnText.textContent = itemTitle ? 'Send Swap Offer with "' + itemTitle.slice(0, 20) + '..."' : 'Send Swap Offer';
+        }
+      }
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    // Quick Offer Input Validation
+    window.checkQuickOfferValidity = function() {
+      const titleInput = document.getElementById('offer-title-input');
+      const submitBtn = document.getElementById('submit-exchange-btn');
+      const submitBtnText = document.getElementById('submit-exchange-btn-text');
+
+      if (titleInput && titleInput.value.trim().length >= 3) {
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitBtnText) submitBtnText.textContent = 'Send Swap Offer';
+      } else {
+        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtnText) submitBtnText.textContent = 'Enter Item Title';
+      }
+    };
+  </script>
+<% } %>
+
+<%- include('../../partials/footer') %>

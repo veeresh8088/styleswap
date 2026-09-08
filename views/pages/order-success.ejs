@@ -1,0 +1,227 @@
+<%- include('../partials/header') %>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16">
+
+  <!-- Success Confirmation Card -->
+  <div class="bg-white rounded-3xl p-6 sm:p-10 border border-gray-200 shadow-sm space-y-8">
+    
+    <!-- Top Celebratory Badge -->
+    <div class="text-center space-y-3 pb-6 border-b border-gray-100">
+      <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner animate-in zoom-in duration-300">
+        <i data-lucide="check-circle-2" class="w-10 h-10 sm:w-12 sm:h-12"></i>
+      </div>
+      <span class="inline-block px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider">
+        Payment & Order Confirmed
+      </span>
+      <h1 class="font-display text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+        Thank You for Your Order!
+      </h1>
+      <p class="text-sm text-gray-500 max-w-md mx-auto">
+        Your thrift order reference <span class="font-bold text-gray-900 font-mono">#<%= transaction._id.toString().slice(-6).toUpperCase() %></span> has been safely placed and recorded.
+      </p>
+    </div>
+
+    <!-- Live Tracking & Estimated Delivery Tracker -->
+    <div class="bg-gradient-to-br from-indigo-50/70 to-purple-50/40 rounded-2xl p-5 sm:p-6 border border-indigo-100 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-indigo-100/80">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">Courier Partner</span>
+          <p class="font-display text-base font-extrabold text-gray-900 flex items-center gap-1.5">
+            <i data-lucide="truck" class="w-4 h-4 text-indigo-600"></i> Delhivery Express Pan-India
+          </p>
+        </div>
+        <div class="sm:text-right">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 block">AWB Tracking Number</span>
+          <p class="font-mono text-xs sm:text-sm font-bold text-indigo-900"><%= transaction.trackingNumber || 'DLV-IN-89301924' %></p>
+        </div>
+      </div>
+
+      <!-- Estimated Delivery & Timeline Steps -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold">
+            ✓
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-900">Order Placed</p>
+            <p class="text-[11px] text-gray-500"><%= new Date(transaction.createdAt).toLocaleDateString('en-IN') %></p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold animate-pulse">
+            2
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-900">Pickup & Quality Check</p>
+            <p class="text-[11px] text-indigo-700 font-semibold">Courier Assigned</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">
+            3
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-900">Expected Delivery</p>
+            <p class="text-[11px] text-gray-500"><%= transaction.estimatedDelivery ? new Date(transaction.estimatedDelivery).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' }) : 'In 3-4 Days' %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items Purchased / Swapped -->
+    <div class="space-y-4">
+      <h3 class="font-display text-base font-bold text-gray-900 flex items-center justify-between">
+        <span>Order Details</span>
+        <span class="text-xs font-semibold text-gray-400">Styleswap Verified</span>
+      </h3>
+
+      <% if (transaction.type === 'exchange') { %>
+        <!-- Swap Pair Recap -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-center space-x-3.5">
+            <div class="w-16 h-16 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-indigo-100">
+              <img 
+                src="<%= transaction.listingId && transaction.listingId.images ? transaction.listingId.images[0] : '/images/placeholder-item.jpg' %>" 
+                alt="" 
+                class="w-full h-full object-cover"
+                onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+              >
+            </div>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-700 block">Item You Receive</span>
+              <p class="text-xs font-bold text-gray-900 truncate"><%= transaction.listingId ? transaction.listingId.title : 'Listing' %></p>
+              <p class="text-[11px] text-gray-500">From <%= transaction.sellerId ? transaction.sellerId.name : 'Partner' %></p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center space-x-3.5">
+            <div class="w-16 h-16 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-gray-200">
+              <img 
+                src="<%= transaction.exchangeItemId && transaction.exchangeItemId.images ? transaction.exchangeItemId.images[0] : '/images/placeholder-item.jpg' %>" 
+                alt="" 
+                class="w-full h-full object-cover"
+                onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+              >
+            </div>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 block">Item You Dispatch</span>
+              <p class="text-xs font-bold text-gray-900 truncate"><%= transaction.exchangeItemId ? transaction.exchangeItemId.title : 'Listing' %></p>
+              <p class="text-[11px] text-gray-500">Your pre-loved wardrobe item</p>
+            </div>
+          </div>
+        </div>
+
+      <% } else if (transaction.listingId) { %>
+        <!-- Direct Buy Item Recap -->
+        <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between gap-4">
+          <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-gray-200">
+              <img 
+                src="<%= transaction.listingId.images && transaction.listingId.images.length > 0 ? transaction.listingId.images[0] : '/images/placeholder-item.jpg' %>" 
+                alt="<%= transaction.listingId.title %>" 
+                class="w-full h-full object-cover"
+                onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+              >
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-gray-900"><%= transaction.listingId.title %></h4>
+              <p class="text-xs text-gray-500">
+                Size: <span class="font-semibold text-gray-800"><%= transaction.listingId.size %></span> • Condition: <%= transaction.listingId.condition %>
+              </p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Sold by: <%= transaction.sellerId ? transaction.sellerId.name : 'Styleswap Seller' %></p>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-base font-extrabold text-gray-900">₹<%= Number(transaction.amount).toLocaleString('en-IN') %></span>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Summary Grid: Payment Details & Shipping Address -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+      
+      <!-- Shipping Destination -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-gray-400"></i> Shipping Address
+        </h4>
+        <div class="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs text-gray-700 leading-relaxed">
+          <p class="font-bold text-gray-900"><%= transaction.buyerId ? transaction.buyerId.name : 'Customer' %></p>
+          <p class="mt-0.5 text-gray-600"><%= transaction.deliveryAddress || 'Verified Customer Address' %></p>
+          <% if (transaction.phone) { %>
+            <p class="mt-1 font-mono text-gray-500">Phone: +91 <%= transaction.phone %></p>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Payment Receipt Breakdown -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+          <i data-lucide="credit-card" class="w-3.5 h-3.5 text-gray-400"></i> Payment Receipt
+        </h4>
+        <div class="p-4 rounded-2xl bg-gray-50 border border-gray-100 space-y-2 text-xs">
+          <div class="flex items-center justify-between text-gray-600">
+            <span>Payment Method</span>
+            <span class="font-bold text-gray-900 px-2 py-0.5 rounded bg-white border border-gray-200"><%= transaction.paymentMethod || 'UPI' %></span>
+          </div>
+          <div class="flex items-center justify-between text-gray-600">
+            <span>Reference ID</span>
+            <span class="font-mono text-[11px] text-gray-500"><%= transaction.paymentReference || 'UPI-982109281' %></span>
+          </div>
+          <div class="flex items-center justify-between text-gray-600">
+            <span>Payment Status</span>
+            <span class="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full"><%= transaction.paymentStatus === 'cod' ? 'Cash on Delivery' : 'Paid & Confirmed' %></span>
+          </div>
+          <div class="pt-2 border-t border-gray-200 flex items-center justify-between text-sm">
+            <span class="font-bold text-gray-900">Total Paid</span>
+            <span class="font-extrabold text-gray-900 text-base">₹<%= Number(transaction.totalPaid || transaction.amount).toLocaleString('en-IN') %></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Assurance Banner -->
+    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-start space-x-3 text-emerald-950">
+      <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+      <div class="text-xs space-y-0.5">
+        <p class="font-bold">Covered by Styleswap 24-Hour Thrift Buyer Protection</p>
+        <p class="text-emerald-800">
+          Once your package is delivered, you have 24 hours to inspect the item. If it has unmentioned damage or doesn't match the listing condition, you are eligible for an instant free return and 100% refund.
+        </p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a 
+        href="/user/dashboard#<%= transaction.type === 'exchange' ? 'exchanges' : 'orders' %>" 
+        class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-colors"
+      >
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> View in Dashboard
+      </a>
+
+      <a 
+        href="/listings" 
+        class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+      >
+        <i data-lucide="shopping-bag" class="w-4 h-4"></i> Continue Shopping
+      </a>
+
+      <button 
+        type="button" 
+        onclick="window.print()" 
+        class="w-full sm:w-auto px-6 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+      >
+        <i data-lucide="printer" class="w-4 h-4"></i> Print Receipt
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<%- include('../partials/footer') %>

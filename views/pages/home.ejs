@@ -1,0 +1,370 @@
+<%- include('../partials/header') %>
+
+<!-- Hero Section with Indian Thrift & Second-Hand Western Wear Focus -->
+<section class="relative bg-gradient-to-b from-white via-gray-50 to-[#FAFAF7] pt-12 pb-20 border-b border-gray-200 overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      
+      <!-- Hero Text Content -->
+      <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+        <div class="inline-flex items-center space-x-2 bg-white border border-gray-200 px-4 py-1.5 rounded-full shadow-xs">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i>
+            India’s #1 Pre-Loved Fashion & Thrift Marketplace
+          </span>
+        </div>
+
+        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-[1.1] tracking-tight">
+          Buy, Sell & Trade <span class="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-emerald-800 to-amber-600">Second-Hand Wares</span> in India.
+        </h1>
+
+        <p class="text-base sm:text-lg text-gray-600 max-w-2xl leading-relaxed">
+          Clean out your closet or hunt for unique vintage grails. Explore authentic thrifted Levi's jeans, oversized hoodies, pre-owned sneakers, retro jackets, and western street style — all in <strong class="text-gray-900 font-bold">Indian Rupees (₹)</strong> with direct checkout or cashless item swaps.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+          <a href="/listings" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-gray-900 hover:bg-black text-white text-base font-bold shadow-md hover:shadow-lg transition-all">
+            <i data-lucide="shopping-bag" class="w-5 h-5 mr-2"></i>
+            Explore Thrift Wares (in ₹)
+          </a>
+          <a href="/listings?type=exchange" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-white border border-gray-300 text-gray-900 text-base font-bold hover:bg-gray-50 shadow-xs transition-all">
+            <i data-lucide="repeat" class="w-5 h-5 mr-2 text-indigo-600"></i>
+            Swap & Barter Hub
+          </a>
+        </div>
+
+        <!-- Trust Highlights -->
+        <div class="grid grid-cols-3 gap-4 pt-8 border-t border-gray-200 max-w-lg mx-auto lg:mx-0">
+          <div>
+            <p class="text-2xl font-bold font-display text-gray-900">₹499+</p>
+            <p class="text-xs font-medium text-gray-500">Affordable Thrift Prices</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold font-display text-emerald-700">100%</p>
+            <p class="text-xs font-medium text-gray-500">Verified Second-Hand</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold font-display text-gray-900">Pan-India</p>
+            <p class="text-xs font-medium text-gray-500">Delivery & Swaps</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Visual Showcase -->
+      <div class="lg:col-span-5 relative">
+        <div class="relative mx-auto max-w-md bg-white p-3 rounded-3xl border border-gray-200 shadow-xl">
+          <div class="relative overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100">
+            <img 
+              src="https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80" 
+              alt="Thrifted Leather Biker Jacket" 
+              class="w-full h-full object-cover"
+              onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+            >
+            <div class="absolute top-3 left-3 bg-white/95 backdrop-blur text-gray-900 text-xs font-bold px-3 py-1 rounded-full border border-gray-200 shadow-xs flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Second-Hand Thrift Find
+            </div>
+            <div class="absolute bottom-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-semibold px-3 py-1 rounded-lg">
+              Bengaluru, KA
+            </div>
+          </div>
+
+          <div class="p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase font-bold text-gray-500 tracking-wider">Vintage Jackets & Flannels</span>
+              <span class="text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">Thrifted Vintage</span>
+            </div>
+            <h3 class="font-display font-bold text-gray-900 text-lg">90s Distressed Faux Leather Biker Jacket (Size L)</h3>
+            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+              <div>
+                <span class="text-xs text-gray-400 block">Thrift Price</span>
+                <span class="text-xl font-extrabold text-gray-900">₹2,499 <span class="text-xs text-gray-500 font-normal">or Barter</span></span>
+              </div>
+              <a href="/listings" class="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1">
+                View Details <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Indian Thrift Categories Section -->
+<section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+    <div>
+      <span class="text-xs font-bold uppercase tracking-widest text-emerald-700">Pre-Loved Categories</span>
+      <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1">Shop Second-Hand by Category</h2>
+    </div>
+    <a href="/listings" class="mt-4 md:mt-0 text-sm font-bold text-gray-900 hover:text-black flex items-center gap-1">
+      Browse All Categories <i data-lucide="arrow-right" class="w-4 h-4"></i>
+    </a>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+    <% if (categories && categories.length > 0) { %>
+      <% categories.forEach(cat => { %>
+        <a href="/listings?category=<%= cat.slug %>" class="group bg-white rounded-2xl p-5 border border-gray-200 hover:border-gray-900 hover:shadow-md transition-all text-center flex flex-col items-center justify-between">
+          <div class="w-14 h-14 rounded-2xl bg-gray-100 group-hover:bg-gray-900 group-hover:text-white flex items-center justify-center text-gray-700 transition-colors mb-3">
+            <% if (cat.slug.includes('denim') || cat.slug.includes('cargo')) { %>
+              <i data-lucide="shirt" class="w-6 h-6"></i>
+            <% } else if (cat.slug.includes('streetwear') || cat.slug.includes('hoodie')) { %>
+              <i data-lucide="feather" class="w-6 h-6"></i>
+            <% } else if (cat.slug.includes('sneaker') || cat.slug.includes('kick')) { %>
+              <i data-lucide="footprints" class="w-6 h-6"></i>
+            <% } else if (cat.slug.includes('jacket') || cat.slug.includes('flannel')) { %>
+              <i data-lucide="briefcase" class="w-6 h-6"></i>
+            <% } else if (cat.slug.includes('dress') || cat.slug.includes('top')) { %>
+              <i data-lucide="palette" class="w-6 h-6"></i>
+            <% } else { %>
+              <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+            <% } %>
+          </div>
+          <h3 class="font-bold text-gray-900 text-sm group-hover:text-black transition-colors line-clamp-2"><%= cat.name %></h3>
+          <span class="text-xs text-gray-400 mt-1"><%= cat.count || 0 %> items</span>
+        </a>
+      <% }) %>
+    <% } %>
+  </div>
+</section>
+
+<!-- Featured Pre-Loved Listings Grid in Rupees -->
+<section class="py-14 bg-white border-y border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-widest text-emerald-700">Fresh Pre-Loved Drops</span>
+        <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1">Featured Second-Hand Wares</h2>
+      </div>
+      <div class="flex items-center space-x-2 mt-4 md:mt-0">
+        <a href="/listings?type=sell" class="text-xs font-bold px-3.5 py-1.5 rounded-full bg-gray-100 text-gray-800 hover:bg-gray-200">Buy Direct (₹)</a>
+        <a href="/listings?type=exchange" class="text-xs font-bold px-3.5 py-1.5 rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100">Trade / Swap</a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <% if (featuredListings && featuredListings.length > 0) { %>
+        <% featuredListings.forEach(item => { %>
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-all">
+            <!-- Image Area -->
+            <a href="/listings/<%= item._id %>" class="relative block overflow-hidden aspect-[4/3] min-h-[220px] bg-gray-100">
+              <img 
+                src="<%= item.images && item.images.length > 0 ? item.images[0] : '/images/placeholder-item.jpg' %>" 
+                alt="<%= item.title %>" 
+                loading="lazy"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+              >
+              <!-- Type Badge -->
+              <div class="absolute top-2.5 left-2.5">
+                <% if (item.type === 'exchange') { %>
+                  <span class="bg-indigo-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                    <i data-lucide="repeat" class="w-3 h-3"></i> Trade
+                  </span>
+                <% } else if (item.type === 'both') { %>
+                  <span class="bg-gray-900 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                    <i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i> Buy / Swap
+                  </span>
+                <% } else { %>
+                  <span class="bg-white text-gray-900 border border-gray-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                    <i data-lucide="tag" class="w-3 h-3"></i> Buy Now
+                  </span>
+                <% } %>
+              </div>
+
+              <!-- Condition Badge -->
+              <div class="absolute bottom-2.5 right-2.5 bg-black/75 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs">
+                <%= item.condition %>
+              </div>
+            </a>
+
+            <!-- Card Body -->
+            <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex items-center justify-between text-[11px] text-gray-400 font-bold mb-1">
+                  <span class="uppercase tracking-wider"><%= item.category ? item.category.name : 'Thrift' %></span>
+                  <span><%= item.location || 'India' %></span>
+                </div>
+                <a href="/listings/<%= item._id %>" class="block font-bold text-gray-900 text-sm hover:text-indigo-600 transition-colors line-clamp-1">
+                  <%= item.title %>
+                </a>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                <div>
+                  <% if (item.type === 'exchange') { %>
+                    <span class="text-xs font-bold text-indigo-700">Open for Trade</span>
+                  <% } else { %>
+                    <span class="text-base font-extrabold text-gray-900">₹<%= Number(item.price).toLocaleString('en-IN') %></span>
+                    <% if (item.type === 'both') { %>
+                      <span class="text-[10px] text-gray-400 block font-normal">or Swap</span>
+                    <% } %>
+                  <% } %>
+                </div>
+
+                <a href="/listings/<%= item._id %>" class="text-xs font-bold text-gray-900 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
+                  View Item
+                </a>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <div class="col-span-full py-12 text-center text-gray-500">
+          No featured listings available at this moment.
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Latest Pre-Loved Arrivals Grid -->
+<section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+    <div>
+      <span class="text-xs font-bold uppercase tracking-widest text-emerald-700">Just Dropped</span>
+      <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1">Latest Closet Arrivals in India</h2>
+    </div>
+    <a href="/listings" class="mt-4 md:mt-0 inline-flex items-center text-sm font-bold text-gray-900 hover:text-indigo-600 transition-colors">
+      View All 75+ Items <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <% if (typeof latestListings !== 'undefined' && latestListings && latestListings.length > 0) { %>
+      <% latestListings.forEach(item => { %>
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-all">
+          <!-- Image Area -->
+          <a href="/listings/<%= item._id %>" class="relative block overflow-hidden aspect-[4/3] min-h-[220px] bg-gray-100">
+            <img 
+              src="<%= item.images && item.images.length > 0 ? item.images[0] : '/images/placeholder-item.jpg' %>" 
+              alt="<%= item.title %>" 
+              loading="lazy"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+            >
+            <!-- Type Badge -->
+            <div class="absolute top-2.5 left-2.5">
+              <% if (item.type === 'exchange') { %>
+                <span class="bg-indigo-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                  <i data-lucide="repeat" class="w-3 h-3"></i> Trade
+                </span>
+              <% } else if (item.type === 'both') { %>
+                <span class="bg-gray-900 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                  <i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i> Buy / Swap
+                </span>
+              <% } else { %>
+                <span class="bg-white text-gray-900 border border-gray-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                  <i data-lucide="tag" class="w-3 h-3"></i> Buy Now
+                </span>
+              <% } %>
+            </div>
+
+            <!-- Condition Badge -->
+            <div class="absolute bottom-2.5 right-2.5 bg-black/75 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs">
+              <%= item.condition %>
+            </div>
+          </a>
+
+          <!-- Card Body -->
+          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between text-[11px] text-gray-400 font-bold mb-1">
+                <span class="uppercase tracking-wider"><%= item.category ? item.category.name : 'Thrift' %></span>
+                <span><%= item.location || 'India' %></span>
+              </div>
+              <a href="/listings/<%= item._id %>" class="block font-bold text-gray-900 text-sm hover:text-indigo-600 transition-colors line-clamp-1">
+                <%= item.title %>
+              </a>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+              <div>
+                <% if (item.type === 'exchange') { %>
+                  <span class="text-xs font-bold text-indigo-700">Open for Trade</span>
+                <% } else { %>
+                  <span class="text-base font-extrabold text-gray-900">₹<%= Number(item.price).toLocaleString('en-IN') %></span>
+                  <% if (item.type === 'both') { %>
+                    <span class="text-[10px] text-gray-400 block font-normal">or Swap</span>
+                  <% } %>
+                <% } %>
+              </div>
+
+              <a href="/listings/<%= item._id %>" class="text-xs font-bold text-gray-900 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
+                View Item
+              </a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+</section>
+
+<!-- How Second-Hand Wardrobe Exchange Works -->
+<section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="text-center max-w-2xl mx-auto mb-14">
+    <span class="text-xs font-bold uppercase tracking-widest text-indigo-600">Zero Cash Needed</span>
+    <h2 class="font-display text-3xl font-extrabold text-gray-900 mt-2">How Wardrobe Trading Works</h2>
+    <p class="text-sm text-gray-600 mt-2">Trade pre-owned jackets, sneakers, and modern western wear with thrifters across India in three easy steps.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-xs text-center">
+      <div class="w-14 h-14 rounded-2xl bg-gray-100 text-gray-900 flex items-center justify-center mx-auto mb-5 font-display font-extrabold text-xl">
+        1
+      </div>
+      <h3 class="font-bold text-gray-900 text-lg mb-2">List From Your Closet</h3>
+      <p class="text-sm text-gray-500 leading-relaxed">
+        Upload photos of your pre-loved jeans, hoodies, or sneakers and set a price in ₹ or mark it for "Exchange".
+      </p>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-xs text-center">
+      <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-5 font-display font-extrabold text-xl">
+        2
+      </div>
+      <h3 class="font-bold text-gray-900 text-lg mb-2">Propose an Item Swap</h3>
+      <p class="text-sm text-gray-500 leading-relaxed">
+        Found something you love? Click "Propose Swap" and select one item from your own wardrobe to trade.
+      </p>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-xs text-center">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-5 font-display font-extrabold text-xl">
+        3
+      </div>
+      <h3 class="font-bold text-gray-900 text-lg mb-2">Ship Across India</h3>
+      <p class="text-sm text-gray-500 leading-relaxed">
+        Once accepted, both items are marked as exchanged. Ship via local courier (Delhivery, BlueDart, India Post) with tracking.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+  <div class="bg-gray-900 rounded-3xl p-8 sm:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
+    <div class="space-y-3 text-center md:text-left max-w-xl">
+      <h2 class="font-display text-2xl sm:text-3xl font-extrabold">Have Pre-Owned Clothes Sitting Unworn?</h2>
+      <p class="text-gray-300 text-sm leading-relaxed">
+        Turn your unworn western clothes into extra cash in Rupees (₹) or trade them for fresh thrift pieces. Listing takes under 2 minutes.
+      </p>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3">
+      <a href="/listings/create" class="inline-flex items-center justify-center px-6 py-3.5 rounded-full bg-white text-gray-900 text-sm font-bold shadow hover:bg-gray-100 transition-colors">
+        <i data-lucide="plus-circle" class="w-4 h-4 mr-2 text-indigo-600"></i>
+        Post an Item Now
+      </a>
+      <a href="/auth/register" class="inline-flex items-center justify-center px-6 py-3.5 rounded-full bg-gray-800 border border-gray-700 text-white text-sm font-bold hover:bg-gray-700 transition-colors">
+        Create Free Account
+      </a>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
