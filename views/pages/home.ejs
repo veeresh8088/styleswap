@@ -1,91 +1,209 @@
 <%- include('../partials/header') %>
 
 <!-- Hero Section with Indian Thrift & Second-Hand Western Wear Focus -->
-<section class="relative bg-gradient-to-b from-white via-gray-50 to-[#FAFAF7] pt-12 pb-20 border-b border-gray-200 overflow-hidden">
+<section class="relative bg-gradient-to-b from-[#FDFDFB] via-[#F8F8F4] to-[#F1F1EB] pt-8 sm:pt-12 pb-16 sm:pb-24 border-b border-gray-200/80 overflow-hidden">
+  <!-- Subtle Background Accents -->
+  <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-60">
+    <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-emerald-100/40 blur-3xl"></div>
+    <div class="absolute top-1/3 -right-32 w-96 h-96 rounded-full bg-amber-100/40 blur-3xl"></div>
+  </div>
+
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
       
-      <!-- Hero Text Content -->
-      <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-        <div class="inline-flex items-center space-x-2 bg-white border border-gray-200 px-4 py-1.5 rounded-full shadow-xs">
-          <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i>
+      <!-- Hero Text Content (Left Column) -->
+      <div class="lg:col-span-6 space-y-6 text-center lg:text-left">
+        <div class="inline-flex items-center space-x-2.5 bg-white/90 backdrop-blur border border-emerald-200/70 px-4 py-1.5 rounded-full shadow-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
             India’s #1 Pre-Loved Fashion & Thrift Marketplace
           </span>
         </div>
 
-        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-[1.1] tracking-tight">
-          Buy, Sell & Trade <span class="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-emerald-800 to-amber-600">Second-Hand Wares</span> in India.
+        <h1 class="font-display text-4xl sm:text-5xl xl:text-6xl font-black text-gray-900 leading-[1.1] tracking-tight">
+          Buy, Sell & Trade <span class="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-emerald-800 to-amber-700">Second-Hand Wares</span> in India.
         </h1>
 
-        <p class="text-base sm:text-lg text-gray-600 max-w-2xl leading-relaxed">
-          Clean out your closet or hunt for unique vintage grails. Explore authentic thrifted Levi's jeans, oversized hoodies, pre-owned sneakers, retro jackets, and western street style — all in <strong class="text-gray-900 font-bold">Indian Rupees (₹)</strong> with direct checkout or cashless item swaps.
+        <p class="text-base sm:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
+          Clean out your closet or hunt for authentic vintage grails. Explore pre-owned Levi's denim, streetwear hoodies, retro jackets, and kicks — all priced in <strong class="text-gray-900 font-bold">Indian Rupees (₹)</strong> with direct checkout or cashless wardrobe item swaps.
         </p>
 
         <!-- CTA Buttons -->
-        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-          <a href="/listings" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-gray-900 hover:bg-black text-white text-base font-bold shadow-md hover:shadow-lg transition-all">
-            <i data-lucide="shopping-bag" class="w-5 h-5 mr-2"></i>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3.5 pt-1">
+          <a href="/listings" class="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl bg-gray-900 hover:bg-black text-white text-sm sm:text-base font-bold shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all">
+            <i data-lucide="shopping-bag" class="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-amber-400"></i>
             Explore Thrift Wares (in ₹)
           </a>
-          <a href="/listings?type=exchange" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-white border border-gray-300 text-gray-900 text-base font-bold hover:bg-gray-50 shadow-xs transition-all">
-            <i data-lucide="repeat" class="w-5 h-5 mr-2 text-indigo-600"></i>
-            Swap & Barter Hub
+          <a href="/listings?type=exchange" class="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl bg-white hover:bg-gray-50 border border-gray-300 text-gray-900 text-sm sm:text-base font-bold shadow-xs hover:border-gray-400 transition-all">
+            <i data-lucide="shuffle" class="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-indigo-600"></i>
+            Swap & Trade Hub
           </a>
         </div>
 
         <!-- Trust Highlights -->
-        <div class="grid grid-cols-3 gap-4 pt-8 border-t border-gray-200 max-w-lg mx-auto lg:mx-0">
-          <div>
-            <p class="text-2xl font-bold font-display text-gray-900">₹499+</p>
-            <p class="text-xs font-medium text-gray-500">Affordable Thrift Prices</p>
+        <div class="grid grid-cols-3 gap-3 pt-6 border-t border-gray-200/80 max-w-md mx-auto lg:mx-0">
+          <div class="bg-white/70 backdrop-blur rounded-2xl p-3 border border-gray-200/60 shadow-2xs text-center lg:text-left">
+            <p class="text-xl sm:text-2xl font-black font-display text-gray-900">₹149+</p>
+            <p class="text-[11px] font-semibold text-gray-500 mt-0.5">Budget Thrift</p>
           </div>
-          <div>
-            <p class="text-2xl font-bold font-display text-emerald-700">100%</p>
-            <p class="text-xs font-medium text-gray-500">Verified Second-Hand</p>
+          <div class="bg-white/70 backdrop-blur rounded-2xl p-3 border border-gray-200/60 shadow-2xs text-center lg:text-left">
+            <p class="text-xl sm:text-2xl font-black font-display text-emerald-700">100%</p>
+            <p class="text-[11px] font-semibold text-gray-500 mt-0.5">Verified Items</p>
           </div>
-          <div>
-            <p class="text-2xl font-bold font-display text-gray-900">Pan-India</p>
-            <p class="text-xs font-medium text-gray-500">Delivery & Swaps</p>
+          <div class="bg-white/70 backdrop-blur rounded-2xl p-3 border border-gray-200/60 shadow-2xs text-center lg:text-left">
+            <p class="text-xl sm:text-2xl font-black font-display text-gray-900">Pan-India</p>
+            <p class="text-[11px] font-semibold text-gray-500 mt-0.5">2-Way Swaps</p>
           </div>
         </div>
       </div>
 
-      <!-- Hero Visual Showcase -->
-      <div class="lg:col-span-5 relative">
-        <div class="relative mx-auto max-w-md bg-white p-3 rounded-3xl border border-gray-200 shadow-xl">
-          <div class="relative overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100">
-            <img 
-              src="https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80" 
-              alt="Thrifted Leather Biker Jacket" 
-              class="w-full h-full object-cover"
-              onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
-            >
-            <div class="absolute top-3 left-3 bg-white/95 backdrop-blur text-gray-900 text-xs font-bold px-3 py-1 rounded-full border border-gray-200 shadow-xs flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Second-Hand Thrift Find
+      <!-- Hero Visual Composition Showcase (Right Column) -->
+      <div class="lg:col-span-6 relative">
+        <% 
+          const heroMain = (typeof heroListings !== 'undefined' && heroListings && heroListings.length > 0) ? heroListings[0] : null;
+          const heroSub1 = (typeof heroListings !== 'undefined' && heroListings && heroListings.length > 1) ? heroListings[1] : null;
+          const heroSub2 = (typeof heroListings !== 'undefined' && heroListings && heroListings.length > 2) ? heroListings[2] : null;
+          const heroSub3 = (typeof heroListings !== 'undefined' && heroListings && heroListings.length > 3) ? heroListings[3] : null;
+        %>
+
+        <div class="relative max-w-lg mx-auto lg:max-w-none">
+          <!-- Main Hero Composition Grid -->
+          <div class="grid grid-cols-12 gap-3 sm:gap-4 items-start">
+            
+            <!-- Primary Feature Card (Left Column, Large) -->
+            <div class="col-span-7 sm:col-span-7">
+              <div class="group bg-white rounded-3xl p-3 sm:p-3.5 border border-gray-200/90 shadow-xl hover:shadow-2xl transition-all duration-300 relative">
+                <!-- Floating Verified Badge -->
+                <div class="absolute -top-3 left-4 z-20 bg-emerald-800 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+                  <i data-lucide="shield-check" class="w-3 h-3 text-amber-300"></i>
+                  <span>Verified Second-Hand</span>
+                </div>
+
+                <a href="<%= heroMain ? '/listings/' + heroMain._id : '/listings' %>" class="relative block overflow-hidden rounded-2xl aspect-[4/5] bg-gray-100">
+                  <img 
+                    src="<%= (heroMain && heroMain.images && heroMain.images.length > 0) ? heroMain.images[0] : 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80' %>" 
+                    alt="<%= heroMain ? heroMain.title : 'Pre-Loved Jacket' %>" 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+                  >
+                  
+                  <!-- Bottom Pill -->
+                  <div class="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+                    <span class="bg-black/80 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">
+                      <%= heroMain ? (heroMain.size ? 'Size ' + heroMain.size : 'Pre-Loved') : 'Size L' %>
+                    </span>
+                    <span class="bg-white/95 text-gray-900 text-[10px] font-black px-2.5 py-1 rounded-lg shadow-xs">
+                      <%= heroMain ? heroMain.condition : 'Like New' %>
+                    </span>
+                  </div>
+                </a>
+
+                <!-- Card Details -->
+                <div class="p-2.5 sm:p-3 space-y-1.5">
+                  <div class="flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                    <span class="truncate max-w-[130px]"><%= (heroMain && heroMain.category) ? heroMain.category.name : 'Vintage Outerwear' %></span>
+                    <span class="text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60 font-semibold">Drop #01</span>
+                  </div>
+
+                  <a href="<%= heroMain ? '/listings/' + heroMain._id : '/listings' %>" class="block font-display font-extrabold text-gray-900 text-sm sm:text-base hover:text-indigo-600 transition-colors line-clamp-1">
+                    <%= heroMain ? heroMain.title : '90s Distressed Faux Leather Biker Jacket' %>
+                  </a>
+
+                  <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div>
+                      <span class="text-[10px] text-gray-400 block font-medium">Thrift Price</span>
+                      <span class="text-base sm:text-lg font-black text-gray-900 leading-none">
+                        ₹<%= heroMain ? Number(heroMain.price).toLocaleString('en-IN') : '2,499' %>
+                      </span>
+                    </div>
+                    <a href="<%= heroMain ? '/listings/' + heroMain._id : '/listings' %>" class="text-xs font-bold text-gray-900 bg-gray-100 hover:bg-gray-900 hover:text-white px-3 py-1.5 rounded-xl transition-colors">
+                      View
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="absolute bottom-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-semibold px-3 py-1 rounded-lg">
-              Bengaluru, KA
+
+            <!-- Supporting Right Column (2 Stacked Secondary Cards) -->
+            <div class="col-span-5 sm:col-span-5 space-y-3 sm:space-y-4">
+              
+              <!-- Sub Card 1 (Swap Ready Item) -->
+              <div class="group bg-white rounded-3xl p-2.5 sm:p-3 border border-gray-200/90 shadow-md hover:shadow-xl transition-all duration-300 relative">
+                <!-- Floating Swap Badge -->
+                <div class="absolute -top-2.5 right-3 z-20 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                  <i data-lucide="repeat" class="w-2.5 h-2.5 text-amber-300"></i>
+                  <span>Swap Ready</span>
+                </div>
+
+                <a href="<%= heroSub1 ? '/listings/' + heroSub1._id : '/listings' %>" class="relative block overflow-hidden rounded-2xl aspect-square bg-gray-100">
+                  <img 
+                    src="<%= (heroSub1 && heroSub1.images && heroSub1.images.length > 0) ? heroSub1.images[0] : 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80' %>" 
+                    alt="<%= heroSub1 ? heroSub1.title : 'Thrift Streetwear' %>" 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+                  >
+                  <div class="absolute bottom-2 left-2 bg-black/75 text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
+                    ₹<%= heroSub1 ? Number(heroSub1.price).toLocaleString('en-IN') : '199' %>
+                  </div>
+                </a>
+
+                <div class="p-1.5 pt-2">
+                  <span class="text-[9px] font-bold uppercase tracking-wider text-indigo-700 block truncate">
+                    <%= (heroSub1 && heroSub1.category) ? heroSub1.category.name : 'Streetwear' %>
+                  </span>
+                  <a href="<%= heroSub1 ? '/listings/' + heroSub1._id : '/listings' %>" class="block font-bold text-gray-900 text-xs hover:text-indigo-600 transition-colors line-clamp-1">
+                    <%= heroSub1 ? heroSub1.title : 'Perfomax Sleeveless Hoodie' %>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Sub Card 2 (Vintage / Denim Item) -->
+              <div class="group bg-white rounded-3xl p-2.5 sm:p-3 border border-gray-200/90 shadow-md hover:shadow-xl transition-all duration-300 relative">
+                <a href="<%= heroSub2 ? '/listings/' + heroSub2._id : '/listings' %>" class="relative block overflow-hidden rounded-2xl aspect-square bg-gray-100">
+                  <img 
+                    src="<%= (heroSub2 && heroSub2.images && heroSub2.images.length > 0) ? heroSub2.images[0] : 'https://images.unsplash.com/photo-1542272604-780c96856592?auto=format&fit=crop&w=600&q=80' %>" 
+                    alt="<%= heroSub2 ? heroSub2.title : 'Thrift Denim' %>" 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+                  >
+                  <div class="absolute bottom-2 left-2 bg-black/75 text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
+                    ₹<%= heroSub2 ? Number(heroSub2.price).toLocaleString('en-IN') : '399' %>
+                  </div>
+                </a>
+
+                <div class="p-1.5 pt-2">
+                  <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-700 block truncate">
+                    <%= (heroSub2 && heroSub2.category) ? heroSub2.category.name : 'Denim & Casuals' %>
+                  </span>
+                  <a href="<%= heroSub2 ? '/listings/' + heroSub2._id : '/listings' %>" class="block font-bold text-gray-900 text-xs hover:text-indigo-600 transition-colors line-clamp-1">
+                    <%= heroSub2 ? heroSub2.title : 'Denim & Casuals Cardigan' %>
+                  </a>
+                </div>
+              </div>
+
             </div>
+
           </div>
 
-          <div class="p-4 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs uppercase font-bold text-gray-500 tracking-wider">Vintage Jackets & Flannels</span>
-              <span class="text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">Thrifted Vintage</span>
-            </div>
-            <h3 class="font-display font-bold text-gray-900 text-lg">90s Distressed Faux Leather Biker Jacket (Size L)</h3>
-            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
-              <div>
-                <span class="text-xs text-gray-400 block">Thrift Price</span>
-                <span class="text-xl font-extrabold text-gray-900">₹2,499 <span class="text-xs text-gray-500 font-normal">or Barter</span></span>
+          <!-- Floating Live Community Pill -->
+          <div class="mt-4 bg-white/95 backdrop-blur rounded-2xl p-3 border border-gray-200 shadow-lg flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="flex -space-x-2 overflow-hidden">
+                <span class="inline-block h-7 w-7 rounded-full ring-2 ring-white bg-amber-400 text-[10px] font-extrabold flex items-center justify-center text-gray-900">RS</span>
+                <span class="inline-block h-7 w-7 rounded-full ring-2 ring-white bg-indigo-500 text-[10px] font-extrabold flex items-center justify-center text-white">AV</span>
+                <span class="inline-block h-7 w-7 rounded-full ring-2 ring-white bg-emerald-500 text-[10px] font-extrabold flex items-center justify-center text-white">PK</span>
               </div>
-              <a href="/listings" class="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1">
-                View Details <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-              </a>
+              <div>
+                <p class="text-xs font-bold text-gray-900 leading-tight">160+ Active Thrift Wares</p>
+                <p class="text-[10px] font-medium text-gray-500">Live listings across Mumbai, Delhi, Bengaluru & Pune</p>
+              </div>
             </div>
+            <a href="/listings" class="text-xs font-black text-emerald-800 hover:text-emerald-950 flex items-center gap-1 flex-shrink-0">
+              <span>Shop All</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </a>
           </div>
+
         </div>
       </div>
 
@@ -105,11 +223,11 @@
     </a>
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
     <% if (categories && categories.length > 0) { %>
       <% categories.forEach(cat => { %>
-        <a href="/listings?category=<%= cat.slug %>" class="group bg-white rounded-2xl p-5 border border-gray-200 hover:border-gray-900 hover:shadow-md transition-all text-center flex flex-col items-center justify-between">
-          <div class="w-14 h-14 rounded-2xl bg-gray-100 group-hover:bg-gray-900 group-hover:text-white flex items-center justify-center text-gray-700 transition-colors mb-3">
+        <a href="/listings?category=<%= cat.slug %>" class="group bg-white rounded-3xl p-5 border border-gray-200/90 hover:border-gray-900 shadow-2xs hover:shadow-lg hover:-translate-y-1 transition-all duration-200 text-center flex flex-col items-center justify-between min-h-[160px]">
+          <div class="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 group-hover:bg-gray-900 group-hover:border-gray-900 group-hover:text-white flex items-center justify-center text-gray-800 transition-all duration-200 mb-3 shadow-2xs group-hover:scale-105">
             <% if (cat.slug.includes('denim') || cat.slug.includes('cargo')) { %>
               <i data-lucide="shirt" class="w-6 h-6"></i>
             <% } else if (cat.slug.includes('streetwear') || cat.slug.includes('hoodie')) { %>
@@ -124,8 +242,12 @@
               <i data-lucide="shopping-bag" class="w-6 h-6"></i>
             <% } %>
           </div>
-          <h3 class="font-bold text-gray-900 text-sm group-hover:text-black transition-colors line-clamp-2"><%= cat.name %></h3>
-          <span class="text-xs text-gray-400 mt-1"><%= cat.count || 0 %> items</span>
+          <div class="space-y-1 w-full">
+            <h3 class="font-display font-bold text-gray-900 text-sm group-hover:text-black transition-colors line-clamp-1 leading-snug"><%= cat.name %></h3>
+            <span class="inline-block text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/50">
+              <%= cat.count || 0 %> wares
+            </span>
+          </div>
         </a>
       <% }) %>
     <% } %>

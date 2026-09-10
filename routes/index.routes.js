@@ -55,9 +55,20 @@ router.get('/', forbidAdmin, async (req, res, next) => {
       })
     );
 
+    // Hero showcase listings (4 diverse real fashion items with images)
+    const heroListings = await Listing.find({
+      status: LISTING_STATUS.APPROVED,
+      'images.0': { $exists: true }
+    })
+      .populate('category', 'name slug')
+      .populate('sellerId', 'name')
+      .sort({ price: -1, createdAt: -1 })
+      .limit(4);
+
     res.render('pages/home', {
       title: 'Styleswap - Second-Hand Fashion & Thrift Exchange India',
       categories: categoriesWithStats,
+      heroListings: heroListings.length > 0 ? heroListings : (featuredListings.length > 0 ? featuredListings.slice(0, 4) : latestListings.slice(0, 4)),
       featuredListings: featuredListings.length > 0 ? featuredListings : latestListings.slice(0, 4),
       latestListings
     });
