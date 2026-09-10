@@ -55,20 +55,47 @@ router.get('/', forbidAdmin, async (req, res, next) => {
       })
     );
 
-    // Hero showcase listings (4 diverse real fashion items with images)
-    const heroListings = await Listing.find({
+    // Hero showcase: Curate exactly 2 Women/Girls Western One-Piece Dresses and 1 Men Fashion piece
+    // 1. Primary Girl Western Dress (e.g. Forever New Satin Dress / White Cutout Dress)
+    const girlDress1 = await Listing.findOne({
       status: LISTING_STATUS.APPROVED,
-      'images.0': { $exists: true }
-    })
-      .populate('category', 'name slug')
-      .populate('sellerId', 'name')
-      .sort({ price: -1, createdAt: -1 })
-      .limit(4);
+      'images.0': { $exists: true },
+      title: { $regex: /Forever New Teal Satin Dress|Zara White Cutout Dress|Mango Black Wrap Dress|Forever New Blue Satin Dress/i }
+    }).populate('category', 'name slug').populate('sellerId', 'name');
+
+    // 2. Secondary Girl Western Dress (e.g. Na-Kd Ribbed Dress / Forever New Wine Wrap Dress)
+    const girlDress2 = await Listing.findOne({
+      status: LISTING_STATUS.APPROVED,
+      'images.0': { $exists: true },
+      _id: { $ne: girlDress1?._id },
+      title: { $regex: /Na-Kd Black Ribbed Dress|Forever New Wine Wrap Dress|Zara Green Satin Dress|Bombay Catsey Pink Tiered Dress/i }
+    }).populate('category', 'name slug').populate('sellerId', 'name');
+
+    // 3. Men Fashion Piece (e.g. UCB Grey Casual Blazer / Boohoo Green Blazer)
+    const menWear = await Listing.findOne({
+      status: LISTING_STATUS.APPROVED,
+      'images.0': { $exists: true },
+      title: { $regex: /United Colors Of Benetton Grey Casual Blazer|Boohoo Green Blazer Jacket|Primark Green Tailored Blazer/i }
+    }).populate('category', 'name slug').populate('sellerId', 'name');
+
+    // Assemble curated 3-item composition (2 girls dresses + 1 men dress) with dynamic fallback
+    const heroListings = [girlDress1, girlDress2, menWear].filter(Boolean);
+    if (heroListings.length < 3) {
+      const more = await Listing.find({
+        status: LISTING_STATUS.APPROVED,
+        'images.0': { $exists: true },
+        _id: { $nin: heroListings.map(h => h._id) }
+      })
+        .populate('category', 'name slug')
+        .populate('sellerId', 'name')
+        .limit(3 - heroListings.length);
+      heroListings.push(...more);
+    }
 
     res.render('pages/home', {
       title: 'Styleswap - Second-Hand Fashion & Thrift Exchange India',
       categories: categoriesWithStats,
-      heroListings: heroListings.length > 0 ? heroListings : (featuredListings.length > 0 ? featuredListings.slice(0, 4) : latestListings.slice(0, 4)),
+      heroListings,
       featuredListings: featuredListings.length > 0 ? featuredListings : latestListings.slice(0, 4),
       latestListings
     });
