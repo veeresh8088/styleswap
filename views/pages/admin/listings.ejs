@@ -18,9 +18,6 @@
           <a href="/admin/export/listings" class="px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-1.5">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Export Listings CSV
           </a>
-          <a href="/listings/create" class="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5">
-            <i data-lucide="plus" class="w-3.5 h-3.5 text-amber-400"></i> + Create Item
-          </a>
         </div>
       </div>
 
@@ -78,9 +75,9 @@
                       <div class="flex items-center space-x-3">
                         <img src="<%= item.images && item.images.length > 0 ? item.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-12 h-12 rounded-xl object-cover border border-gray-200" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
                         <div class="max-w-xs">
-                          <a href="/listings/<%= item._id %>" target="_blank" class="font-bold text-gray-900 hover:text-indigo-600 truncate block">
+                          <span class="font-bold text-gray-900 truncate block" title="<%= item.title %>">
                             <%= item.title %>
-                          </a>
+                          </span>
                           <span class="text-[10px] text-gray-400"><%= item.condition %> • <%= item.location || 'India' %></span>
                         </div>
                       </div>

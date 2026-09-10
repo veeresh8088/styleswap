@@ -1,0 +1,537 @@
+<%- include('../../partials/header') %>
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+  <!-- Header & Breadcrumb -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-2 text-xs text-gray-500 font-medium mb-2">
+      <a href="/" class="hover:text-gray-900 transition-colors">Home</a>
+      <span>/</span>
+      <a href="/listings" class="hover:text-gray-900 transition-colors">Thrift Collection</a>
+      <span>/</span>
+      <a href="/listings/<%= listing._id %>" class="hover:text-gray-900 transition-colors truncate max-w-xs"><%= listing.title %></a>
+      <span>/</span>
+      <span class="text-gray-900 font-semibold">Propose Swap</span>
+    </div>
+    <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-2.5">
+      <i data-lucide="repeat" class="w-7 h-7 text-indigo-600"></i>
+      Propose Wardrobe Barter / Swap
+    </h1>
+    <p class="text-xs sm:text-sm text-gray-500 mt-1">
+      Exchange 1 piece from your wardrobe for the seller's piece. Add an optional cash top-up in ₹ if items differ in valuation.
+    </p>
+  </div>
+
+  <form action="/transactions/exchange" method="POST" id="dedicated-swap-form" class="space-y-8">
+    <input type="hidden" name="listingId" value="<%= listing._id %>">
+    <input type="hidden" name="exchangeItemId" id="dedicated-selected-item-id" value="">
+
+    <!-- Top: Side-by-Side Comparison -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Target Piece (Seller's Item) -->
+      <div class="bg-white rounded-3xl p-6 border-2 border-indigo-100 shadow-xs space-y-4 relative">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+            <i data-lucide="target" class="w-4 h-4 text-indigo-600"></i> 1. Desired Seller Piece
+          </span>
+          <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Seller's Item</span>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <img 
+            src="<%= listing.images && listing.images.length > 0 ? listing.images[0] : '/images/placeholder-item.jpg' %>" 
+            alt="<%= listing.title %>"
+            class="w-24 h-24 rounded-2xl object-cover border border-gray-200 flex-shrink-0"
+            onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+          >
+          <div class="space-y-1 min-w-0">
+            <h3 class="font-display font-bold text-base text-gray-900 truncate"><%= listing.title %></h3>
+            <p class="text-xs text-gray-500">
+              Size: <strong class="text-gray-800"><%= listing.size || 'Standard' %></strong> • 
+              Condition: <strong class="text-gray-800"><%= listing.condition %></strong>
+            </p>
+            <p class="text-xs font-bold text-indigo-950">
+              Est. Value: ₹<%= Number(listing.price).toLocaleString('en-IN') %>
+            </p>
+            <p class="text-[11px] text-gray-400">
+              Owned by: <%= listing.sellerId ? listing.sellerId.name : 'Seller' %>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Your Offering Piece (User's Item) -->
+      <div 
+        class="bg-white rounded-3xl p-6 border-2 border-dashed border-gray-300 hover:border-indigo-400 shadow-xs space-y-4 cursor-pointer transition-all group" 
+        id="offering-piece-container"
+        onclick="focusOfferingSelector()"
+        title="Click to choose or change your offering piece"
+      >
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+          <span class="text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1.5 group-hover:text-indigo-600 transition-colors">
+            <i data-lucide="shirt" class="w-4 h-4 text-gray-600 group-hover:text-indigo-600 transition-colors"></i> 2. Your Offering Piece
+          </span>
+          <div class="flex items-center gap-2">
+            <span id="selected-badge" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              ✓ Selected
+            </span>
+            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-colors">
+              Click to Choose ↓
+            </span>
+          </div>
+        </div>
+
+        <div id="offering-piece-preview" class="text-center py-6 text-gray-400 space-y-2">
+          <i data-lucide="plus-circle" class="w-8 h-8 mx-auto text-indigo-400 group-hover:scale-110 transition-transform"></i>
+          <p class="text-xs font-bold text-gray-700">Select an item from your wardrobe</p>
+          <p class="text-[11px] text-gray-400">Click here or select from your active collection below</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Middle: Wardrobe Selector Tabs -->
+    <div id="wardrobe-selector-section" class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs space-y-6 transition-all">
+      
+      <% const hasClosetItems = userExchangeableItems && userExchangeableItems.length > 0; %>
+      
+      <!-- Top selection row with direct Dropdown and Tabs -->
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
+          <div class="flex items-center space-x-2">
+            <% if (hasClosetItems) { %>
+              <button 
+                type="button" 
+                id="tab-closet-btn" 
+                onclick="switchTab('closet')"
+                class="px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <i data-lucide="shirt" class="w-4 h-4 text-indigo-600"></i>
+                From My Wardrobe (<%= userExchangeableItems.length %>)
+              </button>
+            <% } %>
+            <button 
+              type="button" 
+              id="tab-quick-btn" 
+              onclick="switchTab('quick')"
+              class="px-4 py-2 text-xs font-bold rounded-xl <%= hasClosetItems ? 'bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100' : 'bg-indigo-50 text-indigo-900 border border-indigo-200' %> transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <i data-lucide="plus" class="w-4 h-4 text-indigo-600"></i>
+              Offer An Unlisted Piece from Home
+            </button>
+          </div>
+
+          <% if (hasClosetItems) { %>
+            <!-- Quick Dropdown Picker -->
+            <div class="flex items-center gap-2">
+              <label for="wardrobe-quick-select" class="text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap hidden md:inline">
+                Quick Select:
+              </label>
+              <select 
+                id="wardrobe-quick-select" 
+                onchange="selectFromDropdown(this)"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-xs font-semibold rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 cursor-pointer"
+              >
+                <option value="">-- Choose from your <%= userExchangeableItems.length %> items --</option>
+                <% userExchangeableItems.forEach(myItem => { %>
+                  <option 
+                    value="<%= myItem._id %>"
+                    data-title="<%= (myItem.title || '').replace(/"/g, '&quot;') %>"
+                    data-img="<%= myItem.images && myItem.images.length > 0 ? myItem.images[0] : '/images/placeholder-item.jpg' %>"
+                    data-size="<%= myItem.size || 'Standard' %>"
+                    data-cond="<%= myItem.condition %>"
+                    data-val="<%= myItem.price || 0 %>"
+                  >
+                    <%= myItem.title %> (₹<%= Number(myItem.price).toLocaleString('en-IN') %>)
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Tab 1: Wardrobe Grid -->
+      <% if (hasClosetItems) { %>
+        <div id="tab-pane-closet" class="space-y-3">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700">
+            Click any piece to select it as your offering piece:
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-72 overflow-y-auto p-1" id="wardrobe-cards-container">
+            <% userExchangeableItems.forEach(myItem => { %>
+              <div 
+                id="swap-card-<%= myItem._id %>"
+                data-item-id="<%= myItem._id %>"
+                data-item-title="<%= (myItem.title || '').replace(/"/g, '&quot;') %>"
+                data-item-img="<%= myItem.images && myItem.images.length > 0 ? myItem.images[0] : '/images/placeholder-item.jpg' %>"
+                data-item-size="<%= myItem.size || 'Standard' %>"
+                data-item-cond="<%= myItem.condition %>"
+                data-item-val="<%= myItem.price || 0 %>"
+                onclick="chooseSwapItem(this)"
+                class="swap-item-card cursor-pointer p-3.5 rounded-2xl border-2 border-gray-200 hover:border-indigo-500 hover:shadow-xs flex items-center space-x-3 transition-all bg-white"
+              >
+                <img src="<%= myItem.images && myItem.images.length > 0 ? myItem.images[0] : '/images/placeholder-item.jpg' %>" class="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0" alt="">
+                <div class="min-w-0 flex-1">
+                  <h4 class="font-bold text-xs text-gray-900 truncate"><%= myItem.title %></h4>
+                  <p class="text-[11px] text-gray-500"><%= myItem.size || 'M' %> • <%= myItem.condition %></p>
+                  <p class="text-xs font-black text-gray-900 mt-0.5">₹<%= Number(myItem.price).toLocaleString('en-IN') %></p>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Tab 2: Quick Offer Form -->
+      <div id="tab-pane-quick" class="<%= hasClosetItems ? 'hidden' : '' %> space-y-4">
+        <div class="bg-indigo-50/70 p-4 rounded-2xl border border-indigo-100 flex items-start gap-2.5">
+          <i data-lucide="sparkles" class="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0"></i>
+          <p class="text-xs text-indigo-950 leading-relaxed">
+            Don't have the piece listed in your Styleswap closet yet? Fill in the details below and we will automatically register the piece and propose the swap!
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+            Item Name / Title <span class="text-rose-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="offerTitle" 
+            id="quick-swap-title"
+            placeholder="e.g. Vintage Denim Jacket or Zara Oversized Hoodie (Black)"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+          >
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Category</label>
+            <select name="offerCategory" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs">
+              <% if (typeof categories !== 'undefined' && categories && categories.length > 0) { %>
+                <% categories.forEach(cat => { %>
+                  <option value="<%= cat._id %>" <%= listing.category && cat._id.toString() === listing.category._id.toString() ? 'selected' : '' %>>
+                    <%= cat.name %>
+                  </option>
+                <% }) %>
+              <% } else { %>
+                <option value="<%= listing.category ? listing.category._id : '' %>"><%= listing.category ? listing.category.name : 'Apparel' %></option>
+              <% } %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Size</label>
+            <select name="offerSize" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs">
+              <option value="S">S</option>
+              <option value="M" selected>M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="Free Size">Free Size</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Condition</label>
+            <select name="offerCondition" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs">
+              <option value="Like New (Barely Worn)">Like New</option>
+              <option value="Gently Used (Good Condition)" selected>Gently Used</option>
+              <option value="Thrifted / Vintage Fade">Thrifted / Vintage</option>
+              <option value="Well Worn (Minor Flaws)">Well Worn</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Estimated Valuation (₹)</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">₹</span>
+            <input 
+              type="number" 
+              name="offerPrice" 
+              placeholder="<%= listing.price || 999 %>"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-3.5 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            >
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom: Cash Difference & Note -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs space-y-6">
+      
+      <div class="bg-indigo-50/60 p-5 rounded-2xl border border-indigo-100 space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-bold uppercase tracking-wider text-indigo-950 flex items-center gap-2">
+            <i data-lucide="banknote" class="w-4 h-4 text-emerald-600"></i>
+            Add Cash Difference / Top-Up (₹)
+          </label>
+          <span class="text-[10px] font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-full border border-indigo-200">Optional</span>
+        </div>
+        <p class="text-xs text-gray-600">
+          Offering a lower value item? Add extra cash in ₹ to balance the barter exchange.
+        </p>
+        <div class="relative">
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-500">₹</span>
+          <input 
+            type="number" 
+            name="cashTopUp" 
+            id="dedicated-cash-topup"
+            min="0" 
+            step="50"
+            placeholder="0 (Pure Item Barter)" 
+            class="w-full bg-white border border-gray-300 rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+          Note to Seller (Optional)
+        </label>
+        <textarea 
+          name="notes" 
+          rows="2" 
+          placeholder="Tell the seller why this is an awesome swap, fit details, courier preferences..."
+          class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        ></textarea>
+      </div>
+
+      <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+        <a href="/listings/<%= listing._id %>" class="px-5 py-3 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+          Cancel
+        </a>
+        <button 
+          type="submit" 
+          id="dedicated-swap-submit-btn"
+          class="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <i data-lucide="repeat" class="w-4 h-4"></i>
+          <span id="dedicated-swap-btn-text">Submit Swap Proposal</span>
+        </button>
+      </div>
+
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+  function focusOfferingSelector() {
+    const section = document.getElementById('wardrobe-selector-section');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      section.classList.add('ring-4', 'ring-indigo-400/50');
+      setTimeout(() => {
+        section.classList.remove('ring-4', 'ring-indigo-400/50');
+      }, 1200);
+    }
+    const select = document.getElementById('wardrobe-quick-select');
+    if (select) {
+      select.focus();
+    }
+  }
+
+  function switchTab(mode) {
+    const paneCloset = document.getElementById('tab-pane-closet');
+    const paneQuick = document.getElementById('tab-pane-quick');
+    const btnCloset = document.getElementById('tab-closet-btn');
+    const btnQuick = document.getElementById('tab-quick-btn');
+
+    if (mode === 'closet' && paneCloset) {
+      paneCloset.classList.remove('hidden');
+      if (paneQuick) paneQuick.classList.add('hidden');
+      if (btnCloset) btnCloset.className = 'px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer';
+      if (btnQuick) btnQuick.className = 'px-4 py-2 text-xs font-bold rounded-xl bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100 transition-all flex items-center gap-1.5 cursor-pointer';
+      
+      // If an item was previously selected from wardrobe, keep it active
+      const currentId = document.getElementById('dedicated-selected-item-id').value;
+      if (currentId) {
+        const card = document.getElementById('swap-card-' + currentId);
+        if (card) chooseSwapItem(card);
+      }
+    } else if (mode === 'quick' && paneQuick) {
+      paneQuick.classList.remove('hidden');
+      if (paneCloset) paneCloset.classList.add('hidden');
+      if (btnQuick) btnQuick.className = 'px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer';
+      if (btnCloset) btnCloset.className = 'px-4 py-2 text-xs font-bold rounded-xl bg-gray-50 text-gray-600 border border-transparent hover:bg-gray-100 transition-all flex items-center gap-1.5 cursor-pointer';
+      
+      // Clear wardrobe item selection when switching to custom unlisted piece
+      document.getElementById('dedicated-selected-item-id').value = '';
+      updateQuickOfferPreview();
+    }
+  }
+
+  function selectFromDropdown(sel) {
+    const selectedOpt = sel.options[sel.selectedIndex];
+    if (!selectedOpt || !selectedOpt.value) return;
+
+    const itemId = selectedOpt.value;
+    const title = selectedOpt.getAttribute('data-title');
+    const img = selectedOpt.getAttribute('data-img');
+    const size = selectedOpt.getAttribute('data-size');
+    const cond = selectedOpt.getAttribute('data-cond');
+    const val = selectedOpt.getAttribute('data-val');
+
+    applySelectedItem({ itemId, title, img, size, cond, val });
+
+    // Also highlight the corresponding card if present
+    document.querySelectorAll('.swap-item-card').forEach(c => {
+      c.classList.remove('border-indigo-600', 'ring-2', 'ring-indigo-500/20', 'bg-indigo-50/40');
+    });
+    const card = document.getElementById('swap-card-' + itemId);
+    if (card) {
+      card.classList.add('border-indigo-600', 'ring-2', 'ring-indigo-500/20', 'bg-indigo-50/40');
+    }
+  }
+
+  function chooseSwapItem(el) {
+    document.querySelectorAll('.swap-item-card').forEach(c => {
+      c.classList.remove('border-indigo-600', 'ring-2', 'ring-indigo-500/20', 'bg-indigo-50/40');
+    });
+
+    el.classList.add('border-indigo-600', 'ring-2', 'ring-indigo-500/20', 'bg-indigo-50/40');
+
+    const itemId = el.getAttribute('data-item-id');
+    const title = el.getAttribute('data-item-title');
+    const img = el.getAttribute('data-item-img');
+    const size = el.getAttribute('data-item-size');
+    const cond = el.getAttribute('data-item-cond');
+    const val = el.getAttribute('data-item-val');
+
+    applySelectedItem({ itemId, title, img, size, cond, val });
+
+    // Sync dropdown
+    const select = document.getElementById('wardrobe-quick-select');
+    if (select) {
+      select.value = itemId;
+    }
+  }
+
+  function applySelectedItem(data) {
+    const { itemId, title, img, size, cond, val } = data;
+
+    document.getElementById('dedicated-selected-item-id').value = itemId;
+
+    const preview = document.getElementById('offering-piece-preview');
+    const badge = document.getElementById('selected-badge');
+    const container = document.getElementById('offering-piece-container');
+    const btnText = document.getElementById('dedicated-swap-btn-text');
+
+    if (badge) badge.classList.remove('hidden');
+    if (container) {
+      container.classList.remove('border-dashed', 'border-gray-300');
+      container.classList.add('border-solid', 'border-indigo-500', 'bg-indigo-50/10');
+    }
+
+    if (preview) {
+      preview.className = 'flex items-center space-x-4 text-left';
+      preview.innerHTML = `
+        <img src="${img}" class="w-24 h-24 rounded-2xl object-cover border border-gray-200 flex-shrink-0" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
+        <div class="space-y-1 min-w-0">
+          <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Selected Offering Piece</span>
+          <h3 class="font-display font-bold text-base text-gray-900 truncate">${title}</h3>
+          <p class="text-xs text-gray-500">Size: <strong class="text-gray-800">${size}</strong> • Condition: <strong class="text-gray-800">${cond}</strong></p>
+          <p class="text-xs font-black text-gray-900">Est. Value: ₹${Number(val).toLocaleString('en-IN')}</p>
+        </div>
+      `;
+    }
+
+    if (btnText) {
+      btnText.textContent = 'Propose Swap with "' + title.slice(0, 18) + (title.length > 18 ? '...' : '') + '"';
+    }
+
+    // Clear any validation error
+    const errBanner = document.getElementById('swap-validation-error');
+    if (errBanner) errBanner.classList.add('hidden');
+  }
+
+  function updateQuickOfferPreview() {
+    const titleInput = document.getElementById('quick-swap-title');
+    const valInput = document.querySelector('input[name="offerPrice"]');
+    const sizeSelect = document.querySelector('select[name="offerSize"]');
+    const condSelect = document.querySelector('select[name="offerCondition"]');
+
+    const title = (titleInput && titleInput.value.trim()) || 'Custom Unlisted Wardrobe Piece';
+    const val = (valInput && valInput.value) || '<%= listing.price || 999 %>';
+    const size = (sizeSelect && sizeSelect.value) || 'M';
+    const cond = (condSelect && condSelect.value) || 'Gently Used';
+
+    const preview = document.getElementById('offering-piece-preview');
+    const badge = document.getElementById('selected-badge');
+    const container = document.getElementById('offering-piece-container');
+    const btnText = document.getElementById('dedicated-swap-btn-text');
+
+    if (badge) badge.classList.remove('hidden');
+    if (container) {
+      container.classList.remove('border-dashed', 'border-gray-300');
+      container.classList.add('border-solid', 'border-indigo-500', 'bg-indigo-50/10');
+    }
+
+    if (preview) {
+      preview.className = 'flex items-center space-x-4 text-left';
+      preview.innerHTML = `
+        <div class="w-24 h-24 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 flex-shrink-0">
+          <i data-lucide="package-plus" class="w-10 h-10"></i>
+        </div>
+        <div class="space-y-1 min-w-0">
+          <span class="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">Unlisted Piece from Home</span>
+          <h3 class="font-display font-bold text-base text-gray-900 truncate">${title}</h3>
+          <p class="text-xs text-gray-500">Size: <strong class="text-gray-800">${size}</strong> • Condition: <strong class="text-gray-800">${cond}</strong></p>
+          <p class="text-xs font-black text-gray-900">Est. Value: ₹${Number(val).toLocaleString('en-IN')}</p>
+        </div>
+      `;
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    if (btnText) {
+      btnText.textContent = 'Propose Swap with "' + title.slice(0, 18) + (title.length > 18 ? '...' : '') + '"';
+    }
+  }
+
+  // Bind live preview listeners on quick offer fields
+  document.addEventListener('DOMContentLoaded', () => {
+    const titleInput = document.getElementById('quick-swap-title');
+    const valInput = document.querySelector('input[name="offerPrice"]');
+    const sizeSelect = document.querySelector('select[name="offerSize"]');
+    const condSelect = document.querySelector('select[name="offerCondition"]');
+
+    [titleInput, valInput, sizeSelect, condSelect].forEach(el => {
+      if (el) {
+        el.addEventListener('input', () => {
+          const paneQuick = document.getElementById('tab-pane-quick');
+          if (paneQuick && !paneQuick.classList.contains('hidden')) {
+            updateQuickOfferPreview();
+          }
+        });
+      }
+    });
+
+    // Auto-select first item if available
+    const cards = document.querySelectorAll('.swap-item-card');
+    if (cards.length > 0) {
+      chooseSwapItem(cards[0]);
+    }
+
+    // Form submission validation
+    const form = document.getElementById('dedicated-swap-form');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        const selectedId = document.getElementById('dedicated-selected-item-id').value;
+        const quickTitle = document.getElementById('quick-swap-title') ? document.getElementById('quick-swap-title').value.trim() : '';
+
+        if (!selectedId && !quickTitle) {
+          e.preventDefault();
+          focusOfferingSelector();
+          alert('Please select an item from your wardrobe or enter an item title under "Offer An Unlisted Piece from Home" before submitting your swap.');
+        }
+      });
+    }
+  });
+</script>
+
+<%- include('../../partials/footer') %>

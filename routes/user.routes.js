@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
 const upload = require('../middleware/upload.middleware');
-const { protect } = require('../middleware/auth.middleware');
+const { protect, forbidAdmin } = require('../middleware/auth.middleware');
+
+router.use(forbidAdmin);
 const {
   profileValidation,
   passwordChangeValidation

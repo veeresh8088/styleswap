@@ -66,6 +66,10 @@ const protect = async (req, res, next) => {
         message: 'Access denied. Please log in to proceed.'
       });
     }
+    if (req.originalUrl.startsWith('/admin')) {
+      req.flash('error', 'Please log in to access the administrator portal.');
+      return res.redirect('/admin/login');
+    }
     req.flash('error', 'Please log in to access this page.');
     return res.redirect(`/auth/login?redirect=${encodeURIComponent(req.originalUrl)}`);
   }
@@ -112,7 +116,31 @@ const protect = async (req, res, next) => {
   }
 };
 
+// Middleware to prevent Admin from accessing regular user & marketplace routes
+const forbidAdmin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    // Whitelist admin routes and auth logout
+    if (
+      req.originalUrl.startsWith('/admin') ||
+      req.originalUrl.startsWith('/auth/logout') ||
+      req.originalUrl.startsWith('/api/admin')
+    ) {
+      return next();
+    }
+    if (req.originalUrl.startsWith('/api/')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin accounts cannot access user marketplace features.'
+      });
+    }
+    req.flash('info', 'Admin accounts cannot access marketplace features. Redirected to Admin Control Panel.');
+    return res.redirect('/admin');
+  }
+  next();
+};
+
 module.exports = {
   optionalAuth,
-  protect
+  protect,
+  forbidAdmin
 };

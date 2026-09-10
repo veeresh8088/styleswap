@@ -16,9 +16,6 @@ const { notFoundHandler, errorHandler } = require('./middleware/error.middleware
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-connectDB();
-
 // Security Headers (Helmet with permissive CSP for CDNs & images)
 app.use(
   helmet({
@@ -33,6 +30,7 @@ app.use(
           'https://unpkg.com',
           'https://cdn.jsdelivr.net'
         ],
+        scriptSrcAttr: ["'unsafe-inline'"],
         styleSrc: [
           "'self'",
           "'unsafe-inline'",
@@ -40,9 +38,10 @@ app.use(
           'https://cdn.tailwindcss.com',
           'https://unpkg.com'
         ],
+        styleSrcAttr: ["'unsafe-inline'"],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
         imgSrc: ["'self'", 'data:', 'blob:', 'https:', 'http:'],
-        connectSrc: ["'self'", 'https:']
+        connectSrc: ["'self'", 'https:', 'http:']
       }
     },
     crossOriginEmbedderPolicy: false
@@ -84,11 +83,29 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 // Global Template Variables & JWT Cookie Authentication Extraction
 app.use(optionalAuth);
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   res.locals.info = req.flash('info');
   res.locals.currentPath = req.path;
+  res.locals.cartCount = 0;
+  res.locals.messageCount = 0;
+  if (req.user && req.user.role !== 'admin') {
+    try {
+      const Cart = require('./models/Cart');
+      const Conversation = require('./models/Conversation');
+      const [userCart, convCount] = await Promise.all([
+        Cart.findOne({ userId: req.user._id }),
+        Conversation.countDocuments({
+          $or: [{ buyerId: req.user._id }, { sellerId: req.user._id }]
+        })
+      ]);
+      if (userCart && userCart.items) {
+        res.locals.cartCount = userCart.items.length;
+      }
+      res.locals.messageCount = convCount || 0;
+    } catch (e) {}
+  }
   next();
 });
 
@@ -98,9 +115,15 @@ app.use('/auth', require('./routes/auth.routes'));
 app.use('/listings', require('./routes/listing.routes'));
 app.use('/transactions', require('./routes/transaction.routes'));
 app.use('/checkout', require('./routes/checkout.routes'));
+app.use('/cart', require('./routes/cart.routes'));
 app.use('/user', require('./routes/user.routes'));
 app.use('/admin', require('./routes/admin.routes'));
+app.use('/messages', require('./routes/chat.routes'));
+app.use('/api/chat', require('./routes/chat.routes'));
+app.use('/api/offers', require('./routes/offer.routes'));
+app.use('/api/swaps', require('./routes/swap.routes'));
 app.use('/api', require('./routes/api.routes'));
+
 
 // 404 & Global Error Handling
 app.use(notFoundHandler);
@@ -108,19 +131,25 @@ app.use(errorHandler);
 
 // Start Server only if run directly or not on Vercel
 if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
-  const server = app.listen(PORT, () => {
-    console.log('====================================================');
-    console.log(`✨ Styleswap Server Running`);
-    console.log(`🌐 Local URL: http://localhost:${PORT}`);
-    console.log(`👑 Admin Portal: http://localhost:${PORT}/admin`);
-    console.log(`🔌 REST API Base: http://localhost:${PORT}/api`);
-    console.log(`📦 Mode: ${process.env.NODE_ENV || 'development'}`);
-    console.log('====================================================');
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log('====================================================');
+      console.log(`✨ Styleswap Server Running`);
+      console.log(`🌐 Local URL: http://localhost:${PORT}`);
+      console.log(`👑 Admin Portal: http://localhost:${PORT}/admin`);
+      console.log(`🔌 REST API Base: http://localhost:${PORT}/api`);
+      console.log(`📦 Mode: ${process.env.NODE_ENV || 'development'}`);
+      console.log('====================================================');
+    });
   });
 
-  // Handle unhandled promise rejections
+  // Handle unhandled promise rejections & uncaught exceptions
   process.on('unhandledRejection', (err) => {
-    console.error(`Unhandled Rejection: ${err.message}`);
+    console.error(`Unhandled Rejection: ${err && err.message ? err.message : err}`);
+  });
+
+  process.on('uncaughtException', (err) => {
+    console.error(`Uncaught Exception:`, err);
   });
 }
 

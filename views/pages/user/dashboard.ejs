@@ -54,8 +54,16 @@
     <a href="#exchanges" data-tab="exchanges" class="dashboard-tab-btn px-4 py-3 border-b-2 text-sm font-bold flex items-center gap-2 rounded-t-xl transition-all">
       <i data-lucide="repeat" class="w-4 h-4"></i> Swap Proposals 
       <% if (stats.pendingIncomingExchanges > 0) { %>
-        <span class="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-mono">
+        <span id="badge-pending-exchanges" class="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-mono">
           <%= stats.pendingIncomingExchanges %>
+        </span>
+      <% } %>
+    </a>
+    <a href="#offers" data-tab="offers" class="dashboard-tab-btn px-4 py-3 border-b-2 text-sm font-bold flex items-center gap-2 rounded-t-xl transition-all">
+      <i data-lucide="badge-percent" class="w-4 h-4"></i> Price Offers
+      <% if (stats.pendingIncomingOffers > 0) { %>
+        <span id="badge-pending-offers" class="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-mono">
+          <%= stats.pendingIncomingOffers %>
         </span>
       <% } %>
     </a>
@@ -132,31 +140,43 @@
         Incoming Swap Offers (For Your Items)
       </h2>
 
-      <% if (incomingExchanges && incomingExchanges.length > 0) { %>
+      <% const allIncoming = [...(typeof incomingSwapRequests !== 'undefined' ? incomingSwapRequests : []), ...(typeof incomingExchanges !== 'undefined' ? incomingExchanges : [])]; %>
+      <% if (allIncoming && allIncoming.length > 0) { %>
         <div class="space-y-4">
-          <% incomingExchanges.forEach(exch => { %>
+          <% allIncoming.forEach(item => { 
+               const isSwapReq = !!item.targetListingId;
+               const targetItem = isSwapReq ? item.targetListingId : item.listingId;
+               const offeredItem = isSwapReq ? item.offeredListingId : item.exchangeItemId;
+               const proposer = isSwapReq ? item.proposerId : item.buyerId;
+               const topUp = isSwapReq ? item.cashTopUp : item.cashTopUp;
+               const reqStatus = item.status;
+               const tx = isSwapReq ? (typeof item.transactionId === 'object' ? item.transactionId : null) : item;
+               const hasShipments = tx && tx.shipments && tx.shipments.length >= 2;
+               const isComplete = reqStatus === 'completed' || (hasShipments && tx.shipments[0].status === 'Delivered' && tx.shipments[1].status === 'Delivered');
+          %>
             <div class="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs space-y-4">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-2">
                 <div class="flex items-center space-x-3">
-                  <img src="<%= exch.buyerId ? (exch.buyerId.profileImage || '/images/default-avatar.png') : '/images/default-avatar.png' %>" alt="" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                  <img src="<%= proposer ? (proposer.profileImage || '/images/default-avatar.png') : '/images/default-avatar.png' %>" alt="" class="w-10 h-10 rounded-full object-cover border border-gray-200">
                   <div>
-                    <p class="text-sm font-bold text-gray-900"><%= exch.buyerId ? exch.buyerId.name : 'Member' %> proposed an item swap</p>
-                    <p class="text-xs text-gray-400"><%= new Date(exch.createdAt).toLocaleString('en-IN') %></p>
+                    <p class="text-sm font-bold text-gray-900"><%= proposer ? proposer.name : 'Member' %> proposed an item swap</p>
+                    <p class="text-xs text-gray-400"><%= new Date(item.createdAt).toLocaleString('en-IN') %></p>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <% if (exch.cashTopUp && exch.cashTopUp > 0) { %>
+                  <% if (topUp && topUp > 0) { %>
                     <span class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center gap-1 shadow-xs">
                       <i data-lucide="banknote" class="w-3.5 h-3.5 text-emerald-600"></i>
-                      + ₹<%= Number(exch.cashTopUp).toLocaleString('en-IN') %> Cash Top-Up
+                      + ₹<%= Number(topUp).toLocaleString('en-IN') %> Cash Top-Up
                     </span>
                   <% } %>
-                  <span class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider
-                    <%= exch.status === 'pending' ? 'bg-amber-100 text-amber-800' : '' %>
-                    <%= exch.status === 'completed' || exch.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : '' %>
-                    <%= exch.status === 'rejected' ? 'bg-rose-100 text-rose-800' : '' %>
+                  <span id="swap-status-badge-<%= item._id %>" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider
+                    <%= reqStatus === 'pending' ? 'bg-amber-100 text-amber-800' : '' %>
+                    <%= isComplete ? 'bg-emerald-100 text-emerald-800' : (reqStatus === 'accepted' ? 'bg-indigo-100 text-indigo-800' : '') %>
+                    <%= reqStatus === 'countered' ? 'bg-purple-100 text-purple-800' : '' %>
+                    <%= reqStatus === 'rejected' ? 'bg-rose-100 text-rose-800' : '' %>
                   ">
-                    <%= exch.status %>
+                    <%= isComplete ? '🎉 Swap Completed' : (reqStatus === 'accepted' ? '🔄 Swap In Progress' : (reqStatus === 'rejected' ? '✕ Declined' : '⏳ Pending')) %>
                   </span>
                 </div>
               </div>
@@ -166,14 +186,14 @@
                 <!-- Offered Item -->
                 <div class="flex items-center space-x-3">
                   <div class="w-16 h-16 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
-                    <img src="<%= exch.exchangeItemId && exch.exchangeItemId.images ? exch.exchangeItemId.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
+                    <img src="<%= offeredItem && offeredItem.images ? offeredItem.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
                   </div>
                   <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">Offered to you</span>
-                    <p class="text-xs font-bold text-gray-900"><%= exch.exchangeItemId ? exch.exchangeItemId.title : 'Listing removed' %></p>
-                    <p class="text-[11px] text-gray-500">Condition: <%= exch.exchangeItemId ? exch.exchangeItemId.condition : 'N/A' %></p>
-                    <% if (exch.cashTopUp && exch.cashTopUp > 0) { %>
-                      <p class="text-[11px] font-bold text-emerald-700 mt-0.5">+ Extra Cash: ₹<%= Number(exch.cashTopUp).toLocaleString('en-IN') %></p>
+                    <p class="text-xs font-bold text-gray-900"><%= offeredItem ? offeredItem.title : 'Listing removed' %></p>
+                    <p class="text-[11px] text-gray-500">Condition: <%= offeredItem ? offeredItem.condition : 'N/A' %></p>
+                    <% if (topUp && topUp > 0) { %>
+                      <p class="text-[11px] font-bold text-emerald-700 mt-0.5">+ Extra Cash: ₹<%= Number(topUp).toLocaleString('en-IN') %></p>
                     <% } %>
                   </div>
                 </div>
@@ -181,41 +201,100 @@
                 <!-- Your Item -->
                 <div class="flex items-center space-x-3 sm:border-l sm:border-gray-200 sm:pl-4">
                   <div class="w-16 h-16 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
-                    <img src="<%= exch.listingId && exch.listingId.images ? exch.listingId.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
+                    <img src="<%= targetItem && targetItem.images ? targetItem.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
                   </div>
                   <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider text-gray-600 block">In exchange for your item</span>
-                    <p class="text-xs font-bold text-gray-900"><%= exch.listingId ? exch.listingId.title : 'Listing removed' %></p>
+                    <p class="text-xs font-bold text-gray-900"><%= targetItem ? targetItem.title : 'Listing removed' %></p>
                   </div>
                 </div>
               </div>
 
-              <% if (exch.notes) { %>
+              <% if (item.notes) { %>
                 <p class="text-xs text-gray-600 italic bg-white p-3 rounded-xl border border-gray-100">
-                  "<%= exch.notes %>"
+                  "<%= item.notes %>"
                 </p>
               <% } %>
 
-              <!-- Response Actions -->
-              <div class="pt-2 flex items-center justify-end space-x-3">
-                <% if (exch.status === 'pending') { %>
-                  <form action="/transactions/<%= exch._id %>/respond" method="POST">
-                    <input type="hidden" name="action" value="reject">
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors">
-                      Decline Swap
-                    </button>
-                  </form>
+              <!-- 2 Physical Shipments Tracker (When Accepted or Completed) -->
+              <% if (hasShipments && (reqStatus === 'accepted' || reqStatus === 'completed')) { %>
+                <div class="pt-4 border-t border-gray-100 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                      <i data-lucide="truck" class="w-4 h-4 text-indigo-600"></i>
+                      2-Way Courier Shipments & Live Milestones
+                    </span>
+                    <span class="text-[11px] font-bold font-mono text-gray-500">Both parcels trackable independently</span>
+                  </div>
 
-                  <form action="/transactions/<%= exch._id %>/respond" method="POST">
-                    <input type="hidden" name="action" value="accept">
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-xs">
-                      Accept & Confirm Swap
-                    </button>
-                  </form>
-                <% } else if (exch.status === 'completed' || exch.status === 'accepted') { %>
-                  <a href="/checkout/success/<%= exch._id %>" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 text-xs font-bold flex items-center gap-1.5 transition-colors">
-                    <i data-lucide="receipt" class="w-3.5 h-3.5 text-gray-600"></i> View Swap Receipt
-                  </a>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <% tx.shipments.forEach((s, sIdx) => { 
+                         const milestones = ['Order Placed', 'Confirmed', 'Dispatched', 'Out for Delivery', 'Delivered'];
+                         const mIdx = milestones.indexOf(s.status);
+                         const isDelivered = s.status === 'Delivered';
+                         const isS1 = sIdx === 0;
+                    %>
+                      <div class="p-4 rounded-2xl bg-gray-50/70 border border-gray-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                          <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider <%= isS1 ? 'text-indigo-700' : 'text-purple-700' %> block">
+                              <%= isS1 ? 'Shipment 1' : 'Shipment 2' %>: <%= s.item ? s.item.title : (isS1 ? (offeredItem ? offeredItem.title : 'Product A') : (targetItem ? targetItem.title : 'Product B')) %>
+                            </span>
+                            <p class="text-xs font-semibold text-gray-800">
+                              <%= (s.sender && s.sender._id && s.sender._id.toString() === user._id.toString()) ? 'You' : (s.sender ? s.sender.name : 'Sender') %> → 
+                              <%= (s.receiver && s.receiver._id && s.receiver._id.toString() === user._id.toString()) ? 'You' : (s.receiver ? s.receiver.name : 'Receiver') %>
+                            </p>
+                          </div>
+                          <div class="text-right">
+                            <span class="text-[10px] font-mono font-bold text-gray-700 block"><%= s.trackingNumber %></span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full <%= isDelivered ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800' %>">
+                              <%= s.status %>
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- 5-Step Tracker Bar -->
+                        <div class="grid grid-cols-5 gap-1 pt-1">
+                          <% milestones.forEach((m, idx) => { 
+                               const isPassed = mIdx >= idx;
+                               const isCur = mIdx === idx;
+                          %>
+                            <div class="flex flex-col items-center text-center">
+                              <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold mb-1 <%= isCur ? (isS1 ? 'bg-indigo-600 text-white animate-pulse' : 'bg-purple-600 text-white animate-pulse') : (isPassed ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500') %>">
+                                <%= isPassed && !isCur ? '✓' : (idx + 1) %>
+                              </div>
+                              <span class="text-[9px] leading-tight <%= isCur ? 'font-extrabold text-gray-900' : (isPassed ? 'font-semibold text-gray-700' : 'text-gray-400') %>">
+                                <%= m === 'Out for Delivery' ? 'Out for Deliv.' : m %>
+                              </span>
+                            </div>
+                          <% }) %>
+                        </div>
+                      </div>
+                    <% }) %>
+                  </div>
+                </div>
+              <% } %>
+
+              <!-- Response Actions -->
+              <div class="pt-2 flex items-center justify-end space-x-3" id="swap-actions-<%= item._id %>">
+                <% if (reqStatus === 'pending') { %>
+                  <button onclick="handleDashboardSwapAction('<%= item._id %>', 'reject', this)" class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors cursor-pointer">
+                    Decline Swap
+                  </button>
+                  <button onclick="handleDashboardSwapAction('<%= item._id %>', 'accept', this)" class="px-5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-xs cursor-pointer">
+                    Accept & Confirm Swap
+                  </button>
+                <% } else if (reqStatus === 'completed' || reqStatus === 'accepted') { %>
+                  <% const transId = isSwapReq ? (item.transactionId ? (item.transactionId._id || item.transactionId) : null) : item._id; %>
+                  <% if (transId) { %>
+                    <a href="/checkout/success/<%= transId %>" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                      <i data-lucide="receipt" class="w-3.5 h-3.5 text-gray-600"></i> View Swap Tracking & Receipt
+                    </a>
+                  <% } else { %>
+                    <span class="text-xs font-semibold text-emerald-700">Swap confirmed</span>
+                  <% } %>
+                <% } else if (reqStatus === 'rejected') { %>
+                  <span class="text-xs font-medium text-rose-600">Swap proposal declined</span>
                 <% } %>
               </div>
             </div>
@@ -235,42 +314,130 @@
         Outgoing Swap Offers (You Proposed)
       </h2>
 
-      <% if (outgoingExchanges && outgoingExchanges.length > 0) { %>
+      <% const allOutgoing = [...(typeof outgoingSwapRequests !== 'undefined' ? outgoingSwapRequests : []), ...(typeof outgoingExchanges !== 'undefined' ? outgoingExchanges : [])]; %>
+      <% if (allOutgoing && allOutgoing.length > 0) { %>
         <div class="space-y-4">
-          <% outgoingExchanges.forEach(exch => { %>
-            <div class="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div class="flex items-center space-x-4">
-                <div class="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
-                  <img src="<%= exch.listingId && exch.listingId.images ? exch.listingId.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
+          <% allOutgoing.forEach(item => { 
+               const isSwapReq = !!item.targetListingId;
+               const targetItem = isSwapReq ? item.targetListingId : item.listingId;
+               const offeredItem = isSwapReq ? item.offeredListingId : item.exchangeItemId;
+               const topUp = isSwapReq ? item.cashTopUp : item.cashTopUp;
+               const reqStatus = item.status;
+               const tx = isSwapReq ? (typeof item.transactionId === 'object' ? item.transactionId : null) : item;
+               const hasShipments = tx && tx.shipments && tx.shipments.length >= 2;
+               const isComplete = reqStatus === 'completed' || (hasShipments && tx.shipments[0].status === 'Delivered' && tx.shipments[1].status === 'Delivered');
+          %>
+            <div class="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs space-y-4">
+              <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-4">
+                  <div class="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
+                    <img src="<%= targetItem && targetItem.images ? targetItem.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400">Target Item: <span class="font-bold text-gray-900"><%= targetItem ? targetItem.title : 'Removed' %></span></p>
+                    <p class="text-xs text-gray-500">You offered: <span class="font-semibold text-indigo-700"><%= offeredItem ? offeredItem.title : 'Removed' %></span></p>
+                    <% if (reqStatus === 'countered' && item.counterOffer) { %>
+                      <div class="mt-1.5 p-2 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-900">
+                        <strong>Seller Counter-Offered:</strong> <%= item.counterOffer.note || 'Updated terms' %>
+                        <% if (item.counterOffer.cashTopUp) { %> (Counter Cash: ₹<%= item.counterOffer.cashTopUp %>)<% } %>
+                      </div>
+                    <% } %>
+                  </div>
                 </div>
-                <div>
-                  <p class="text-xs text-gray-400">Target Item: <span class="font-bold text-gray-900"><%= exch.listingId ? exch.listingId.title : 'Removed' %></span></p>
-                  <p class="text-xs text-gray-500">You offered: <span class="font-semibold text-indigo-700"><%= exch.exchangeItemId ? exch.exchangeItemId.title : 'Removed' %></span></p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2.5">
-                <% if (exch.cashTopUp && exch.cashTopUp > 0) { %>
-                  <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800">
-                    + ₹<%= Number(exch.cashTopUp).toLocaleString('en-IN') %> Top-up
+                <div class="flex items-center gap-2.5" id="swap-actions-<%= item._id %>">
+                  <% if (topUp && topUp > 0) { %>
+                    <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800">
+                      + ₹<%= Number(topUp).toLocaleString('en-IN') %> Top-up
+                    </span>
+                  <% } %>
+                  <span id="swap-status-badge-<%= item._id %>" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider
+                    <%= reqStatus === 'pending' ? 'bg-amber-100 text-amber-800' : '' %>
+                    <%= reqStatus === 'countered' ? 'bg-purple-100 text-purple-800' : '' %>
+                    <%= isComplete ? 'bg-emerald-100 text-emerald-800' : (reqStatus === 'accepted' ? 'bg-indigo-100 text-indigo-800' : '') %>
+                    <%= reqStatus === 'rejected' ? 'bg-rose-100 text-rose-800' : '' %>
+                  ">
+                    <%= isComplete ? '🎉 Swap Completed' : (reqStatus === 'accepted' ? '🔄 Swap In Progress' : (reqStatus === 'rejected' ? '✕ Declined' : reqStatus)) %>
                   </span>
-                <% } %>
-                <span class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider
-                  <%= exch.status === 'pending' ? 'bg-amber-100 text-amber-800' : '' %>
-                  <%= exch.status === 'completed' || exch.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : '' %>
-                  <%= exch.status === 'rejected' ? 'bg-rose-100 text-rose-800' : '' %>
-                ">
-                  <%= exch.status %>
-                </span>
-                <% if (exch.status === 'accepted') { %>
-                  <a href="/checkout/swap/<%= exch._id %>" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-colors">
-                    <i data-lucide="truck" class="w-3.5 h-3.5"></i> Pay Courier
-                  </a>
-                <% } else if (exch.status === 'completed') { %>
-                  <a href="/checkout/success/<%= exch._id %>" class="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold flex items-center gap-1 transition-colors">
-                    <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Receipt
-                  </a>
-                <% } %>
+                  <% if (reqStatus === 'pending') { %>
+                    <button onclick="handleDashboardSwapAction('<%= item._id %>', 'cancel', this)" class="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold transition-colors cursor-pointer">
+                      Withdraw Swap
+                    </button>
+                  <% } else if (reqStatus === 'countered') { %>
+                    <button onclick="handleCounterAction('<%= item._id %>', 'accept')" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors">
+                      Accept Counter
+                    </button>
+                    <button onclick="handleCounterAction('<%= item._id %>', 'reject')" class="px-3 py-1.5 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold transition-colors">
+                      Decline
+                    </button>
+                  <% } else if (reqStatus === 'accepted' || reqStatus === 'completed') { %>
+                    <% const transId = isSwapReq ? (item.transactionId ? (item.transactionId._id || item.transactionId) : null) : item._id; %>
+                    <% if (transId) { %>
+                      <a href="/checkout/success/<%= transId %>" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-colors">
+                        <i data-lucide="truck" class="w-3.5 h-3.5"></i> Track Couriers
+                      </a>
+                    <% } %>
+                  <% } %>
+                </div>
               </div>
+
+              <!-- 2 Physical Shipments Tracker for Outgoing (When Accepted or Completed) -->
+              <% if (hasShipments && (reqStatus === 'accepted' || reqStatus === 'completed')) { %>
+                <div class="pt-4 border-t border-gray-100 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                      <i data-lucide="truck" class="w-4 h-4 text-indigo-600"></i>
+                      2-Way Courier Shipments & Live Milestones
+                    </span>
+                    <span class="text-[11px] font-bold font-mono text-gray-500">Both parcels trackable independently</span>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <% tx.shipments.forEach((s, sIdx) => { 
+                         const milestones = ['Order Placed', 'Confirmed', 'Dispatched', 'Out for Delivery', 'Delivered'];
+                         const mIdx = milestones.indexOf(s.status);
+                         const isDelivered = s.status === 'Delivered';
+                         const isS1 = sIdx === 0;
+                    %>
+                      <div class="p-4 rounded-2xl bg-gray-50/70 border border-gray-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                          <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider <%= isS1 ? 'text-indigo-700' : 'text-purple-700' %> block">
+                              <%= isS1 ? 'Shipment 1' : 'Shipment 2' %>: <%= s.item ? s.item.title : (isS1 ? (offeredItem ? offeredItem.title : 'Product A') : (targetItem ? targetItem.title : 'Product B')) %>
+                            </span>
+                            <p class="text-xs font-semibold text-gray-800">
+                              <%= (s.sender && s.sender._id && s.sender._id.toString() === user._id.toString()) ? 'You' : (s.sender ? s.sender.name : 'Sender') %> → 
+                              <%= (s.receiver && s.receiver._id && s.receiver._id.toString() === user._id.toString()) ? 'You' : (s.receiver ? s.receiver.name : 'Receiver') %>
+                            </p>
+                          </div>
+                          <div class="text-right">
+                            <span class="text-[10px] font-mono font-bold text-gray-700 block"><%= s.trackingNumber %></span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full <%= isDelivered ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800' %>">
+                              <%= s.status %>
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- 5-Step Tracker Bar -->
+                        <div class="grid grid-cols-5 gap-1 pt-1">
+                          <% milestones.forEach((m, idx) => { 
+                               const isPassed = mIdx >= idx;
+                               const isCur = mIdx === idx;
+                          %>
+                            <div class="flex flex-col items-center text-center">
+                              <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold mb-1 <%= isCur ? (isS1 ? 'bg-indigo-600 text-white animate-pulse' : 'bg-purple-600 text-white animate-pulse') : (isPassed ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500') %>">
+                                <%= isPassed && !isCur ? '✓' : (idx + 1) %>
+                              </div>
+                              <span class="text-[9px] leading-tight <%= isCur ? 'font-extrabold text-gray-900' : (isPassed ? 'font-semibold text-gray-700' : 'text-gray-400') %>">
+                                <%= m === 'Out for Delivery' ? 'Out for Deliv.' : m %>
+                              </span>
+                            </div>
+                          <% }) %>
+                        </div>
+                      </div>
+                    <% }) %>
+                  </div>
+                </div>
+              <% } %>
             </div>
           <% }) %>
         </div>
@@ -281,6 +448,166 @@
       <% } %>
     </div>
 
+  </div>
+
+  <!-- Tab: Price Offers Pane -->
+  <div id="tab-offers" class="dashboard-tab-pane hidden space-y-8">
+    <!-- Incoming Price Offers -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="font-display text-xl font-extrabold text-gray-900 flex items-center gap-2">
+            <i data-lucide="inbox" class="w-5 h-5 text-amber-500"></i>
+            Incoming Price Offers (On Your Items)
+          </h2>
+          <p class="text-xs text-gray-500 mt-0.5">Buyers who submitted a discounted price offer on your wardrobe items.</p>
+        </div>
+        <% const pendingIncomingOffersCount = (typeof incomingOffers !== 'undefined') ? incomingOffers.filter(o => o.status === 'pending').length : 0; %>
+        <% if (pendingIncomingOffersCount > 0) { %>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            <%= pendingIncomingOffersCount %> Pending Review
+          </span>
+        <% } %>
+      </div>
+
+      <% if (typeof incomingOffers !== 'undefined' && incomingOffers.length > 0) { %>
+        <div class="space-y-4">
+          <% incomingOffers.forEach(offer => { 
+               const buyer = offer.buyerId;
+               const listing = offer.listingId;
+               const status = offer.status;
+          %>
+            <div class="bg-white rounded-3xl p-6 border <%= status === 'accepted' ? 'border-emerald-200 bg-emerald-50/20' : (status === 'rejected' ? 'border-rose-200 bg-rose-50/20' : 'border-gray-200') %> shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
+                  <img src="<%= listing && listing.images ? listing.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-bold text-gray-900"><%= buyer ? buyer.name : 'Buyer' %></span>
+                    <span class="text-[11px] text-gray-400">• <%= new Date(offer.createdAt).toLocaleDateString('en-IN') %></span>
+                  </div>
+                  <h4 class="text-sm font-bold text-gray-900 line-clamp-1"><%= listing ? listing.title : 'Item' %></h4>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs text-gray-400 line-through">₹<%= listing ? Number(listing.price).toLocaleString('en-IN') : 0 %></span>
+                    <span class="text-sm font-extrabold text-emerald-600">Offered: ₹<%= Number(offer.offeredPrice).toLocaleString('en-IN') %></span>
+                    <% if (listing && listing.price > offer.offeredPrice) { %>
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                        <%= Math.round((1 - offer.offeredPrice / listing.price) * 100) %>% OFF
+                      </span>
+                    <% } %>
+                  </div>
+                  <% if (offer.message) { %>
+                    <p class="text-xs text-gray-500 italic mt-1 bg-gray-50 p-2 rounded-lg">"<%= offer.message %>"</p>
+                  <% } %>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2.5 self-end sm:self-center">
+                <span id="offer-status-badge-<%= offer._id %>" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider
+                  <%= status === 'pending' ? 'bg-amber-100 text-amber-800 animate-pulse' : '' %>
+                  <%= status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : '' %>
+                  <%= status === 'rejected' ? 'bg-rose-100 text-rose-800' : '' %>
+                ">
+                  <%= status === 'accepted' ? '✓ Accepted' : (status === 'rejected' ? '✕ Declined' : '⏳ Pending') %>
+                </span>
+
+                <div class="flex items-center gap-2" id="offer-actions-<%= offer._id %>">
+                  <% if (status === 'pending') { %>
+                    <button 
+                      onclick="handleDashboardOfferAction('<%= offer._id %>', 'accept', this)"
+                      class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                      <span>Accept Offer</span>
+                    </button>
+                    <button 
+                      onclick="handleDashboardOfferAction('<%= offer._id %>', 'reject', this)"
+                      class="px-4 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <span>Decline</span>
+                    </button>
+                  <% } else if (status === 'accepted') { %>
+                    <span class="text-xs font-semibold text-emerald-700">Awaiting buyer checkout</span>
+                  <% } else if (status === 'rejected') { %>
+                    <span class="text-xs font-medium text-rose-600">Offer closed</span>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="bg-white rounded-3xl p-8 text-center border border-gray-200">
+          <p class="text-xs font-semibold text-gray-500">No incoming price offers yet.</p>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Outgoing Price Offers -->
+    <div class="space-y-4 pt-6 border-t border-gray-200">
+      <h2 class="font-display text-xl font-extrabold text-gray-900 flex items-center gap-2">
+        <i data-lucide="send" class="w-5 h-5 text-amber-500"></i>
+        Outgoing Price Offers (You Submitted)
+      </h2>
+
+      <% if (typeof outgoingOffers !== 'undefined' && outgoingOffers.length > 0) { %>
+        <div class="space-y-4">
+          <% outgoingOffers.forEach(offer => { 
+               const seller = offer.sellerId;
+               const listing = offer.listingId;
+               const status = offer.status;
+          %>
+            <div class="bg-white rounded-3xl p-6 border <%= status === 'accepted' ? 'border-emerald-200 bg-emerald-50/20' : (status === 'rejected' ? 'border-rose-200 bg-rose-50/20' : 'border-gray-200') %> shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
+                  <img src="<%= listing && listing.images ? listing.images[0] : '/images/placeholder-item.jpg' %>" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';">
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-gray-900 line-clamp-1"><%= listing ? listing.title : 'Item' %></h4>
+                  <p class="text-xs text-gray-500">Seller: <span class="font-semibold text-gray-800"><%= seller ? seller.name : 'Member' %></span></p>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs text-gray-400 line-through">₹<%= listing ? Number(listing.price).toLocaleString('en-IN') : 0 %></span>
+                    <span class="text-sm font-extrabold text-emerald-600">Your Offer: ₹<%= Number(offer.offeredPrice).toLocaleString('en-IN') %></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2.5 self-end sm:self-center" id="offer-actions-<%= offer._id %>">
+                <span id="offer-status-badge-<%= offer._id %>" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider
+                  <%= status === 'pending' ? 'bg-amber-100 text-amber-800' : '' %>
+                  <%= status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : '' %>
+                  <%= status === 'rejected' ? 'bg-rose-100 text-rose-800' : '' %>
+                ">
+                  <%= status === 'accepted' ? '✓ Accepted' : (status === 'rejected' ? '✕ Declined' : '⏳ Pending') %>
+                </span>
+
+                <% if (status === 'accepted' && listing) { %>
+                  <a 
+                    href="/checkout/<%= listing._id %>"
+                    class="px-4 py-2 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span>Checkout Now at ₹<%= Number(offer.offeredPrice).toLocaleString('en-IN') %> →</span>
+                  </a>
+                <% } else if (status === 'pending') { %>
+                  <button 
+                    onclick="handleDashboardOfferAction('<%= offer._id %>', 'cancel', this)"
+                    class="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Cancel Offer
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="bg-white rounded-3xl p-8 text-center border border-gray-200">
+          <p class="text-xs font-semibold text-gray-500">You haven't submitted any price offers yet.</p>
+        </div>
+      <% } %>
+    </div>
   </div>
 
   <!-- Tab 3: Purchases (Orders in ₹) Pane -->
@@ -297,6 +624,10 @@
                 <div class="flex items-center space-x-2 mb-1">
                   <span class="text-xs font-bold text-gray-900 bg-gray-100 px-2.5 py-0.5 rounded">Order #<%= order._id.toString().slice(-6).toUpperCase() %></span>
                   <span class="text-xs text-gray-400"><%= new Date(order.createdAt).toLocaleDateString('en-IN') %></span>
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    <%= order.orderStatus || 'Order Placed' %>
+                  </span>
                 </div>
                 <h3 class="font-bold text-gray-900 text-sm"><%= order.listingId ? order.listingId.title : 'Item no longer active' %></h3>
                 <p class="text-xs text-gray-500">Seller: <%= order.sellerId ? order.sellerId.name : 'Unknown' %></p>
@@ -308,11 +639,12 @@
                 <span class="inline-block text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                   <%= order.paymentMethod || 'UPI' %>
                 </span>
-                <a href="/checkout/success/<%= order._id %>" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-0.5 rounded-full transition-colors">
-                  <i data-lucide="receipt" class="w-3 h-3"></i> Receipt
+                <a href="/checkout/success/<%= order._id %>" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full transition-colors">
+                  <i data-lucide="truck" class="w-3 h-3"></i> Live Tracker & Receipt
                 </a>
               </div>
             </div>
+
           </div>
         <% }) %>
       </div>
@@ -360,5 +692,247 @@
   </div>
 
 </div>
+
+<script>
+function showStyleswapToast(message, type = 'success') {
+  let container = document.getElementById('styleswap-toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'styleswap-toast-container';
+    container.className = 'fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  const isSuccess = type === 'success';
+  toast.className = `pointer-events-auto transform transition-all duration-300 ease-out translate-y-2 opacity-0 flex items-center gap-3 p-4 rounded-2xl shadow-xl text-xs font-bold ${
+    isSuccess ? 'bg-gray-900 text-white border border-emerald-500/30' : 'bg-rose-900 text-white border border-rose-500/30'
+  }`;
+  
+  const icon = isSuccess 
+    ? `<span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 font-extrabold text-sm">✓</span>`
+    : `<span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 font-extrabold text-sm">✕</span>`;
+
+  toast.innerHTML = `
+    ${icon}
+    <div class="flex-1">${message}</div>
+  `;
+
+  container.appendChild(toast);
+  requestAnimationFrame(() => {
+    toast.classList.remove('translate-y-2', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+  });
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+async function handleDashboardSwapAction(swapId, action, btn) {
+  const container = document.getElementById('swap-actions-' + swapId) || (btn ? btn.closest('#swap-actions-' + swapId) : null);
+  const buttons = container ? Array.from(container.querySelectorAll('button')) : (btn ? [btn] : []);
+
+  // Prevent duplicate clicks immediately
+  buttons.forEach(b => {
+    b.disabled = true;
+    b.style.pointerEvents = 'none';
+    b.classList.add('opacity-50');
+  });
+
+  if (btn) {
+    btn.dataset.originalHtml = btn.innerHTML;
+    btn.textContent = action === 'accept' ? 'Accepting...' : (action === 'cancel' ? 'Withdrawing...' : 'Declining...');
+  }
+
+  try {
+    let res = await fetch(`/api/swaps/${swapId}/respond`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action: action === 'cancel' ? 'reject' : action })
+    });
+    let data = await res.json();
+
+    if (!res.ok) {
+      // Fallback to /transactions/:id/respond if swap was stored as exchange transaction
+      res = await fetch(`/transactions/${swapId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: action === 'cancel' ? 'reject' : action })
+      });
+      data = await res.json();
+    }
+
+    if (res.ok && data.success) {
+      showStyleswapToast(data.message || (action === 'accept' ? 'Swap request accepted successfully!' : 'Swap request declined.'), 'success');
+      
+      // Update status badge immediately
+      const badge = document.getElementById('swap-status-badge-' + swapId);
+      if (badge) {
+        if (action === 'accept') {
+          badge.className = 'text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-emerald-100 text-emerald-800';
+          badge.textContent = '✓ Accepted';
+        } else {
+          badge.className = 'text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-rose-100 text-rose-800';
+          badge.textContent = action === 'cancel' ? '✕ Withdrawn' : '✕ Declined';
+        }
+      }
+
+      // Update action container immediately
+      if (container) {
+        if (action === 'accept') {
+          const transId = data.data?.transactionId || data.transactionId || (data.data && data.data._id);
+          if (transId) {
+            container.innerHTML = `
+              <a href="/checkout/success/${transId}" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                <i data-lucide="receipt" class="w-3.5 h-3.5 text-gray-600"></i> View Swap Tracking & Receipt
+              </a>
+            `;
+          } else {
+            container.innerHTML = `<span class="text-xs font-semibold text-emerald-700">✓ Swap confirmed</span>`;
+          }
+        } else {
+          container.innerHTML = `<span class="text-xs font-medium text-rose-600">${action === 'cancel' ? 'Swap proposal withdrawn' : '✕ Swap proposal declined'}</span>`;
+        }
+      }
+
+      // Update tab counter badge if present
+      const badgeCount = document.getElementById('badge-pending-exchanges');
+      if (badgeCount) {
+        let currentCount = parseInt(badgeCount.textContent.trim(), 10) || 0;
+        currentCount = Math.max(0, currentCount - 1);
+        if (currentCount === 0) {
+          badgeCount.style.display = 'none';
+        } else {
+          badgeCount.textContent = currentCount;
+        }
+      }
+
+      if (window.lucide) window.lucide.createIcons();
+    } else {
+      showStyleswapToast(data.message || `Failed to ${action} swap`, 'error');
+      buttons.forEach(b => {
+        b.disabled = false;
+        b.style.pointerEvents = '';
+        b.classList.remove('opacity-50');
+        if (b.dataset.originalHtml) b.innerHTML = b.dataset.originalHtml;
+      });
+    }
+  } catch (err) {
+    showStyleswapToast('Network error while processing swap request', 'error');
+    buttons.forEach(b => {
+      b.disabled = false;
+      b.style.pointerEvents = '';
+      b.classList.remove('opacity-50');
+      if (b.dataset.originalHtml) b.innerHTML = b.dataset.originalHtml;
+    });
+  }
+}
+
+async function handleCounterAction(swapId, action) {
+  if (!confirm(`Are you sure you want to ${action} this counter offer?`)) return;
+  try {
+    const res = await fetch(`/api/swaps/${swapId}/counter-respond`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showStyleswapToast(data.message || `Counter offer ${action}ed successfully!`, 'success');
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      showStyleswapToast(data.message || `Failed to ${action} counter offer`, 'error');
+    }
+  } catch (err) {
+    showStyleswapToast('Network error while responding to counter offer', 'error');
+  }
+}
+
+async function handleDashboardOfferAction(offerId, action, btn) {
+  const container = document.getElementById('offer-actions-' + offerId) || (btn ? btn.closest('#offer-actions-' + offerId) : null);
+  const buttons = container ? Array.from(container.querySelectorAll('button')) : (btn ? [btn] : []);
+
+  // Prevent duplicate clicks immediately
+  buttons.forEach(b => {
+    b.disabled = true;
+    b.style.pointerEvents = 'none';
+    b.classList.add('opacity-50');
+  });
+
+  if (btn) {
+    btn.dataset.originalHtml = btn.innerHTML;
+    btn.textContent = action === 'accept' ? 'Accepting...' : (action === 'cancel' ? 'Cancelling...' : 'Declining...');
+  }
+
+  try {
+    const res = await fetch(`/api/offers/${offerId}/respond`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action: action === 'cancel' ? 'reject' : action })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showStyleswapToast(data.message || (action === 'accept' ? 'Offer accepted successfully!' : 'Offer declined.'), 'success');
+      
+      // Update status badge immediately
+      const badge = document.getElementById('offer-status-badge-' + offerId);
+      if (badge) {
+        if (action === 'accept') {
+          badge.className = 'text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-emerald-100 text-emerald-800';
+          badge.textContent = '✓ Accepted';
+        } else {
+          badge.className = 'text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-rose-100 text-rose-800';
+          badge.textContent = action === 'cancel' ? '✕ Cancelled' : '✕ Declined';
+        }
+      }
+
+      // Update action container immediately
+      if (container) {
+        if (action === 'accept') {
+          container.innerHTML = `<span class="text-xs font-semibold text-emerald-700">✓ Awaiting buyer checkout</span>`;
+        } else {
+          container.innerHTML = `<span class="text-xs font-medium text-rose-600">${action === 'cancel' ? 'Offer cancelled' : '✕ Offer closed'}</span>`;
+        }
+      }
+
+      // Update tab counter badge if present
+      const badgeCount = document.getElementById('badge-pending-offers');
+      if (badgeCount) {
+        let currentCount = parseInt(badgeCount.textContent.trim(), 10) || 0;
+        currentCount = Math.max(0, currentCount - 1);
+        if (currentCount === 0) {
+          badgeCount.style.display = 'none';
+        } else {
+          badgeCount.textContent = currentCount;
+        }
+      }
+
+      if (window.lucide) window.lucide.createIcons();
+    } else {
+      showStyleswapToast(data.message || `Failed to ${action} offer`, 'error');
+      buttons.forEach(b => {
+        b.disabled = false;
+        b.style.pointerEvents = '';
+        b.classList.remove('opacity-50');
+        if (b.dataset.originalHtml) b.innerHTML = b.dataset.originalHtml;
+      });
+    }
+  } catch (err) {
+    showStyleswapToast('Network error while processing offer', 'error');
+    buttons.forEach(b => {
+      b.disabled = false;
+      b.style.pointerEvents = '';
+      b.classList.remove('opacity-50');
+      if (b.dataset.originalHtml) b.innerHTML = b.dataset.originalHtml;
+    });
+  }
+}
+</script>
 
 <%- include('../../partials/footer') %>

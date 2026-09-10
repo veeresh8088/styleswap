@@ -3,9 +3,10 @@ const router = express.Router();
 const Category = require('../models/Category');
 const Listing = require('../models/Listing');
 const { LISTING_STATUS } = require('../config/constants');
+const { forbidAdmin } = require('../middleware/auth.middleware');
 
 // @desc Home Page
-router.get('/', async (req, res, next) => {
+router.get('/', forbidAdmin, async (req, res, next) => {
   try {
     const categories = await Category.find({ isActive: true }).sort({ name: 1 });
 
@@ -66,7 +67,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // @desc About Styleswap
-router.get('/about', (req, res) => {
+router.get('/about', forbidAdmin, (req, res) => {
   res.render('pages/about', {
     title: 'About Us - Styleswap'
   });

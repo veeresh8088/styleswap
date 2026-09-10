@@ -5,7 +5,11 @@ const { protect } = require('../middleware/auth.middleware');
 const isAdmin = require('../middleware/isAdmin.middleware');
 const upload = require('../middleware/upload.middleware');
 
-// Protect all admin routes with authentication and admin role
+// Admin Login & Authentication Routes (Public to unauthenticated admins)
+router.get('/login', adminController.renderAdminLogin);
+router.post('/login', adminController.adminLogin);
+
+// Protect all admin management routes with authentication and admin role
 router.use(protect, isAdmin);
 
 // Dashboard
@@ -34,10 +38,16 @@ router.put('/categories/:id', upload.single('image'), adminController.updateCate
 router.post('/categories/:id/delete', adminController.deleteCategory);
 router.delete('/categories/:id', adminController.deleteCategory);
 
-// Transactions Monitor
+// Transactions Monitor & Order Status Management
 router.get('/transactions', adminController.getTransactions);
+router.post('/transactions/:id/status', adminController.updateOrderStatus);
+router.put('/transactions/:id/status', adminController.updateOrderStatus);
 
 // Reports Export
 router.get('/export/:resource', adminController.exportCSV);
+
+// Database Tables Hub & Data Inspector
+router.get('/tables', adminController.getDatabaseTables);
+router.get('/tables/:tableName', adminController.getDatabaseTables);
 
 module.exports = router;

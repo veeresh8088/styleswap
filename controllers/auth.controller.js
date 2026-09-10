@@ -17,6 +17,9 @@ const setAuthCookie = (res, token) => {
 // @desc Render Login Page
 exports.renderLogin = (req, res) => {
   if (req.user) {
+    if (req.user.role === ROLES.ADMIN) {
+      return res.redirect('/admin');
+    }
     return res.redirect('/user/dashboard');
   }
   res.render('pages/auth/login', {
@@ -28,6 +31,9 @@ exports.renderLogin = (req, res) => {
 // @desc Render Register Page
 exports.renderRegister = (req, res) => {
   if (req.user) {
+    if (req.user.role === ROLES.ADMIN) {
+      return res.redirect('/admin');
+    }
     return res.redirect('/user/dashboard');
   }
   res.render('pages/auth/register', {
@@ -171,13 +177,14 @@ exports.login = async (req, res, next) => {
 
     req.flash('success', `Welcome back, ${user.name}!`);
 
-    // Redirect to requested URL or dashboard
-    if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
-      return res.redirect(redirect);
-    }
-
+    // If user is Admin, ALWAYS redirect directly to Admin Control Panel
     if (user.role === ROLES.ADMIN) {
       return res.redirect('/admin');
+    }
+
+    // Redirect to requested URL or dashboard for regular users
+    if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
+      return res.redirect(redirect);
     }
 
     res.redirect('/user/dashboard');

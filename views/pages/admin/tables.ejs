@@ -1,0 +1,196 @@
+<%- include('../../partials/header') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+  <div class="flex flex-col lg:flex-row gap-8">
+
+    <!-- Admin Sidebar -->
+    <%- include('../../partials/admin-sidebar') %>
+
+    <!-- Main Table Management Content -->
+    <div class="flex-1 space-y-6">
+      
+      <!-- Page Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+              Database Engine: MongoDB
+            </span>
+            <span class="text-xs text-gray-500 font-medium">DB: smart_wear_exchange</span>
+          </div>
+          <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1">
+            Database Tables & Collections Hub
+          </h1>
+          <p class="text-xs sm:text-sm text-gray-500 mt-1">
+            Inspect, maintain, and query all database tables maintaining user, product, order, barter, and loyalty data.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <a href="/admin/tables" class="px-3.5 py-2 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-black transition-colors flex items-center gap-1.5 shadow-xs">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            Refresh Tables
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs">
+          <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Total Tables</span>
+          <span class="text-2xl font-black text-gray-900"><%= tablesSummary.length %></span>
+          <span class="text-[11px] text-emerald-600 font-semibold block mt-0.5">Active & Indexed</span>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs">
+          <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Total Records</span>
+          <span class="text-2xl font-black text-indigo-600"><%= totalRecordsCount %></span>
+          <span class="text-[11px] text-gray-500 font-medium block mt-0.5">Across all models</span>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs">
+          <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Loyalty Ledger Balance</span>
+          <span class="text-2xl font-black text-amber-600"><%= totalLoyaltyPointsInCirculation %> Pts</span>
+          <span class="text-[11px] text-amber-800 font-medium block mt-0.5">₹<%= ((totalLoyaltyPointsInCirculation / 10) * 100).toLocaleString('en-IN') %> Value</span>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs">
+          <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">DB Health</span>
+          <span class="text-2xl font-black text-emerald-600">Online</span>
+          <span class="text-[11px] text-gray-500 font-medium block mt-0.5">Read / Write OK</span>
+        </div>
+      </div>
+
+      <!-- Table Browser / Master List -->
+      <div class="bg-white rounded-3xl border border-gray-200 shadow-xs overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h3 class="font-display font-bold text-base text-gray-900">Database Tables Directory</h3>
+            <p class="text-xs text-gray-500">Live counts and structural specifications for all data entities</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50/80 border-b border-gray-100 text-gray-500 uppercase tracking-wider text-[10px] font-bold">
+              <tr>
+                <th class="py-3 px-5">Table / Collection</th>
+                <th class="py-3 px-4">Entity Type</th>
+                <th class="py-3 px-4">Total Rows / Records</th>
+                <th class="py-3 px-4">Primary Fields</th>
+                <th class="py-3 px-5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-gray-700">
+              <% tablesSummary.forEach(t => { %>
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                  <td class="py-4 px-5">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-8 h-8 rounded-xl bg-gray-100 text-gray-700 flex items-center justify-center font-bold text-xs">
+                        <i data-lucide="<%= t.icon %>" class="w-4 h-4 text-gray-700"></i>
+                      </div>
+                      <div>
+                        <a href="/admin/tables/<%= t.slug %>" class="font-bold text-gray-900 hover:text-indigo-600 transition-colors text-sm">
+                          <%= t.tableName %>
+                        </a>
+                        <span class="block text-[11px] text-gray-400 font-mono"><%= t.collectionName %></span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4 px-4">
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold <%= t.badgeColor %>">
+                      <%= t.category %>
+                    </span>
+                  </td>
+                  <td class="py-4 px-4">
+                    <span class="text-sm font-black text-gray-900"><%= t.count.toLocaleString() %></span>
+                    <span class="text-[10px] text-gray-400 block"><%= t.count === 1 ? 'record' : 'records' %></span>
+                  </td>
+                  <td class="py-4 px-4 text-gray-500 font-mono text-[11px] max-w-xs truncate">
+                    <%= t.fields.join(', ') %>
+                  </td>
+                  <td class="py-4 px-5 text-right">
+                    <a href="/admin/tables/<%= t.slug %>" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors">
+                      <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                      Inspect Table
+                    </a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Detail View if Table is Selected -->
+      <% if (selectedTable) { %>
+        <div class="bg-white rounded-3xl border-2 border-indigo-200 shadow-sm p-6 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-3">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                <i data-lucide="table" class="w-4 h-4"></i> Selected Table
+              </span>
+              <h2 class="font-display text-xl font-extrabold text-gray-900 mt-0.5">
+                <%= selectedTable.tableName %> (<%= selectedTable.count %> records)
+              </h2>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <a href="/admin/tables" class="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50">
+                Close Inspector
+              </a>
+            </div>
+          </div>
+
+          <!-- Table Records Grid -->
+          <% if (selectedRecords && selectedRecords.length > 0) { %>
+            <div class="overflow-x-auto rounded-2xl border border-gray-200">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-gray-50 text-gray-600 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th class="py-2.5 px-3">#</th>
+                    <th class="py-2.5 px-3">ID (_id)</th>
+                    <% const sampleKeys = Object.keys(selectedRecords[0]).filter(k => !['_id', '__v'].includes(k)).slice(0, 5); %>
+                    <% sampleKeys.forEach(k => { %>
+                      <th class="py-2.5 px-3 capitalize"><%= k %></th>
+                    <% }) %>
+                    <th class="py-2.5 px-3 text-right">Created At</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 font-mono text-[11px] text-gray-700">
+                  <% selectedRecords.forEach((rec, rIdx) => { %>
+                    <tr class="hover:bg-indigo-50/40">
+                      <td class="py-2.5 px-3 text-gray-400"><%= rIdx + 1 %></td>
+                      <td class="py-2.5 px-3 font-bold text-gray-900 truncate max-w-[120px]"><%= rec._id %></td>
+                      <% sampleKeys.forEach(k => { %>
+                        <td class="py-2.5 px-3 truncate max-w-[160px]">
+                          <% const val = rec[k]; %>
+                          <% if (typeof val === 'object' && val !== null) { %>
+                            <%= val.name || val.title || JSON.stringify(val).slice(0, 24) %>
+                          <% } else { %>
+                            <%= String(val || '') %>
+                          <% } %>
+                        </td>
+                      <% }) %>
+                      <td class="py-2.5 px-3 text-right text-gray-400">
+                        <%= rec.createdAt ? new Date(rec.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-' %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="text-center py-8 text-gray-400 text-xs">
+              No records currently in <%= selectedTable.tableName %>.
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+
+    </div>
+
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,265 @@
+<%- include('../../partials/header') %>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+  <!-- Header & Breadcrumb -->
+  <div class="mb-6">
+    <div class="flex items-center space-x-2 text-xs text-gray-500 font-medium mb-2">
+      <a href="/" class="hover:text-gray-900 transition-colors">Home</a>
+      <span>/</span>
+      <a href="/listings" class="hover:text-gray-900 transition-colors">Market</a>
+      <span>/</span>
+      <a href="/listings/<%= listing._id %>" class="hover:text-gray-900 transition-colors truncate max-w-xs"><%= listing.title %></a>
+      <span>/</span>
+      <span class="text-gray-900 font-semibold">Make an Offer</span>
+    </div>
+    <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-2.5">
+      <i data-lucide="tag" class="w-7 h-7 text-amber-600"></i>
+      Make a Price Offer (₹)
+    </h1>
+    <p class="text-xs sm:text-sm text-gray-500 mt-1">
+      Negotiate a fair price directly with the seller. If accepted, you will have 24 hours to complete checkout at your offered rate.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+    
+    <!-- Item Card Summary (5 cols) -->
+    <div class="md:col-span-5 bg-white rounded-3xl p-6 border border-gray-200 shadow-xs space-y-4">
+      <div class="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-gray-100">
+        <img 
+          src="<%= listing.images && listing.images.length > 0 ? listing.images[0] : '/images/placeholder-item.jpg' %>" 
+          alt="<%= listing.title %>"
+          class="w-full h-full object-cover"
+          onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+        >
+        <span class="absolute top-3 left-3 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-800 shadow-xs border border-gray-200">
+          <%= listing.category ? listing.category.name : 'Fashion' %>
+        </span>
+      </div>
+
+      <div class="space-y-1.5">
+        <h3 class="font-display font-bold text-base text-gray-900 leading-snug"><%= listing.title %></h3>
+        <p class="text-xs text-gray-500">
+          Size: <strong class="text-gray-800"><%= listing.size || 'Standard' %></strong> • 
+          Condition: <strong class="text-gray-800"><%= listing.condition %></strong>
+        </p>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Asking Price</span>
+          <span class="text-xl font-black text-gray-900">₹<%= Number(listing.price).toLocaleString('en-IN') %></span>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Seller</span>
+          <span class="text-xs font-bold text-indigo-700"><%= listing.sellerId ? listing.sellerId.name : 'Seller' %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Offer Form (7 cols) -->
+    <div class="md:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs space-y-6">
+      <form 
+        id="dedicated-offer-form" 
+        action="/listings/<%= listing._id %>/offer" 
+        method="POST" 
+        class="space-y-5"
+      >
+        <input type="hidden" name="listingId" value="<%= listing._id %>">
+        
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+            Your Proposed Offer Price (₹) *
+          </label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-base font-extrabold text-gray-400">₹</span>
+            <input 
+              type="number" 
+              id="dedicated-offer-price"
+              name="offeredPrice"
+              required 
+              min="1" 
+              value="<%= Math.round((listing.price || 500) * 0.85) %>"
+              oninput="calculateDiscount()"
+              class="w-full bg-gray-50 border border-gray-300 rounded-2xl pl-9 pr-4 py-3 text-lg font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-all"
+            >
+          </div>
+          <div class="flex items-center justify-between mt-2 text-xs">
+            <span id="discount-badge" class="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              15% below asking price
+            </span>
+            <span class="text-gray-400 text-[11px]">Fair counter recommendations</span>
+          </div>
+        </div>
+
+        <!-- Quick Offer Chips -->
+        <div class="space-y-1.5">
+          <span class="text-xs font-bold text-gray-600 block">Quick percentage discounts:</span>
+          <div class="grid grid-cols-3 gap-2">
+            <button 
+              type="button" 
+              onclick="applyQuickDiscount(0.90)"
+              class="py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-900 transition-colors cursor-pointer"
+            >
+              10% Off (₹<%= Math.round((listing.price || 0) * 0.90) %>)
+            </button>
+            <button 
+              type="button" 
+              onclick="applyQuickDiscount(0.85)"
+              class="py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-900 transition-colors cursor-pointer"
+            >
+              15% Off (₹<%= Math.round((listing.price || 0) * 0.85) %>)
+            </button>
+            <button 
+              type="button" 
+              onclick="applyQuickDiscount(0.80)"
+              class="py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-900 transition-colors cursor-pointer"
+            >
+              20% Off (₹<%= Math.round((listing.price || 0) * 0.80) %>)
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+            Note to Seller (Optional)
+          </label>
+          <textarea 
+            id="dedicated-offer-note" 
+            name="message"
+            rows="3" 
+            placeholder="e.g. Ready to pay immediately via UPI if accepted, thanks!"
+            class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-all"
+          ></textarea>
+        </div>
+
+        <div id="dedicated-offer-feedback" class="hidden p-3.5 rounded-xl text-xs font-bold"></div>
+
+        <div class="pt-2 flex items-center justify-end space-x-3">
+          <a href="/listings/<%= listing._id %>" class="px-5 py-3 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+            Cancel
+          </a>
+          <button 
+            type="submit" 
+            id="dedicated-offer-submit-btn"
+            class="px-7 py-3 rounded-2xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span>Send Formal Offer</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const askingPrice = <%= Number(listing.price) || 0 %>;
+
+  function calculateDiscount() {
+    const input = document.getElementById('dedicated-offer-price');
+    const badge = document.getElementById('discount-badge');
+    if (!input || !badge) return;
+
+    const val = Number(input.value) || 0;
+    if (askingPrice > 0 && val > 0) {
+      const diff = askingPrice - val;
+      const pct = Math.round((diff / askingPrice) * 100);
+      if (pct > 0) {
+        badge.textContent = pct + '% below asking price (Save ₹' + diff + ')';
+        badge.className = 'font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200';
+      } else if (pct === 0) {
+        badge.textContent = 'At full asking price';
+        badge.className = 'font-bold text-gray-700 bg-gray-100 px-2.5 py-0.5 rounded-full';
+      } else {
+        badge.textContent = 'Above asking price';
+        badge.className = 'font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full';
+      }
+    }
+  }
+
+  function applyQuickDiscount(multiplier) {
+    const input = document.getElementById('dedicated-offer-price');
+    if (input) {
+      input.value = Math.round(askingPrice * multiplier);
+      calculateDiscount();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    calculateDiscount();
+
+    const form = document.getElementById('dedicated-offer-form');
+    if (form) {
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const priceInput = document.getElementById('dedicated-offer-price');
+        const noteInput = document.getElementById('dedicated-offer-note');
+        const feedback = document.getElementById('dedicated-offer-feedback');
+        const btn = document.getElementById('dedicated-offer-submit-btn');
+
+        if (!priceInput || !priceInput.value) {
+          if (feedback) {
+            feedback.className = 'p-3.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200 block';
+            feedback.textContent = 'Please enter a valid proposed offer price in ₹';
+          }
+          return;
+        }
+
+        const offeredPrice = priceInput.value;
+        const message = noteInput ? noteInput.value : '';
+
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Submitting Offer...</span>';
+          if (window.lucide) window.lucide.createIcons();
+        }
+
+        try {
+          const response = await fetch('/listings/<%= listing._id %>/offer', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              listingId: '<%= listing._id %>',
+              offeredPrice,
+              message
+            })
+          });
+          const data = await response.json();
+
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Failed to submit offer');
+          }
+
+          if (feedback) {
+            feedback.className = 'p-3.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 block';
+            feedback.textContent = '✓ ' + data.message;
+          }
+
+          setTimeout(() => {
+            window.location.href = '/listings/<%= listing._id %>';
+          }, 800);
+        } catch (err) {
+          if (feedback) {
+            feedback.className = 'p-3.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200 block';
+            feedback.textContent = 'Error: ' + err.message;
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i><span>Send Formal Offer</span>';
+            if (window.lucide) window.lucide.createIcons();
+          }
+        }
+      });
+    }
+  });
+</script>
+
+<%- include('../../partials/footer') %>

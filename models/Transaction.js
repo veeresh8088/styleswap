@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../config/constants');
+const { TRANSACTION_TYPES, TRANSACTION_STATUS, ORDER_STATUSES } = require('../config/constants');
 
 const transactionSchema = new mongoose.Schema(
   {
@@ -92,14 +92,121 @@ const transactionSchema = new mongoose.Schema(
       default: 0,
       min: 0
     },
+    loyaltyPointsUsed: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    loyaltyPointsDiscount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     isSwapPurchase: {
       type: Boolean,
       default: false
+    },
+    orderStatus: {
+      type: String,
+      enum: ORDER_STATUSES,
+      default: 'Order Placed'
+    },
+    statusHistory: [
+      {
+        status: {
+          type: String,
+          required: true,
+          enum: ORDER_STATUSES
+        },
+        note: {
+          type: String,
+          default: ''
+        },
+        updatedAt: {
+          type: Date,
+          default: Date.now
+        },
+        updatedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User'
+        }
+      }
+    ],
+    offerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Offer',
+      default: null
+    },
+    swapRequestId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'SwapRequest',
+      default: null
     },
     trackingNumber: {
       type: String,
       default: ''
     },
+    shipments: [
+      {
+        shipmentLabel: {
+          type: String,
+          default: 'Shipment 1'
+        },
+        item: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Listing',
+          required: true
+        },
+        sender: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        receiver: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        trackingNumber: {
+          type: String,
+          required: true
+        },
+        pickupAddress: {
+          type: String,
+          default: ''
+        },
+        deliveryAddress: {
+          type: String,
+          default: ''
+        },
+        status: {
+          type: String,
+          enum: ORDER_STATUSES,
+          default: 'Confirmed'
+        },
+        statusHistory: [
+          {
+            status: {
+              type: String,
+              required: true,
+              enum: ORDER_STATUSES
+            },
+            note: {
+              type: String,
+              default: ''
+            },
+            updatedAt: {
+              type: Date,
+              default: Date.now
+            },
+            updatedBy: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: 'User'
+            }
+          }
+        ]
+      }
+    ],
     estimatedDelivery: {
       type: Date
     },
@@ -118,6 +225,7 @@ const transactionSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
 
 transactionSchema.index({ listingId: 1, buyerId: 1, sellerId: 1 });
 

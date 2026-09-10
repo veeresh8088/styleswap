@@ -47,18 +47,27 @@
                 <th class="py-3.5 px-4">Type</th>
                 <th class="py-3.5 px-4">Target Item</th>
                 <th class="py-3.5 px-4">Buyer / Trader</th>
-                <th class="py-3.5 px-4">Seller</th>
                 <th class="py-3.5 px-4">Amount / Trade</th>
-                <th class="py-3.5 px-4">Status</th>
-                <th class="py-3.5 px-4">Date</th>
+                <th class="py-3.5 px-4">Order / Courier Status</th>
+                <th class="py-3.5 px-4">Latest Update</th>
+                <th class="py-3.5 px-4 text-right">Admin Action</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
               <% if (transactions && transactions.length > 0) { %>
                 <% transactions.forEach(t => { %>
-                  <tr class="hover:bg-gray-50/60 transition-colors">
+                  <% 
+                    const isExchange = t.type === 'exchange';
+                    const hasTwoShipments = isExchange && t.shipments && t.shipments.length >= 2;
+                    const shipA = hasTwoShipments ? t.shipments[0] : null;
+                    const shipB = hasTwoShipments ? t.shipments[1] : null;
+                    const currentOrderStatus = t.orderStatus || (t.status === 'completed' ? 'Delivered' : (t.status === 'rejected' ? 'Cancelled' : 'Order Placed'));
+                  %>
+                  <tr class="hover:bg-gray-50/60 transition-colors" id="order-row-<%= t._id %>">
                     <td class="py-3.5 px-4 font-mono font-bold text-gray-900">
-                      #<%= t._id.toString().slice(-6).toUpperCase() %>
+                      <a href="/checkout/success/<%= t._id %>" class="hover:text-indigo-600 underline decoration-indigo-200">
+                        #<%= t._id.toString().slice(-6).toUpperCase() %>
+                      </a>
                     </td>
                     <td class="py-3.5 px-4">
                       <span class="inline-block px-2 py-0.5 rounded font-bold uppercase text-[10px] <%= t.type === 'exchange' ? 'bg-indigo-100 text-indigo-800' : 'bg-emerald-100 text-emerald-800' %>">
@@ -66,34 +75,96 @@
                       </span>
                     </td>
                     <td class="py-3.5 px-4">
-                      <p class="font-bold text-gray-900 truncate max-w-[150px]"><%= t.listingId ? t.listingId.title : 'Item' %></p>
+                      <% if (isExchange) { %>
+                        <div class="space-y-1">
+                          <p class="font-bold text-gray-900 text-xs">
+                            <span class="text-gray-500 font-normal"><%= t.buyerId ? t.buyerId.name : 'User A' %>:</span>
+                            <span class="text-indigo-700 font-semibold"><%= t.exchangeItemId ? t.exchangeItemId.title : 'Product A' %></span>
+                          </p>
+                          <p class="font-bold text-gray-900 text-xs flex items-center gap-1">
+                            <span class="text-indigo-500 font-bold">⇅</span>
+                            <span class="text-gray-500 font-normal"><%= t.sellerId ? t.sellerId.name : 'User B' %>:</span>
+                            <span class="text-purple-700 font-semibold"><%= t.listingId ? t.listingId.title : 'Product B' %></span>
+                          </p>
+                        </div>
+                      <% } else { %>
+                        <p class="font-bold text-gray-900 truncate max-w-[140px]"><%= t.listingId ? t.listingId.title : 'Item' %></p>
+                        <p class="text-[10px] text-gray-400 truncate">Seller: <%= t.sellerId ? t.sellerId.name : 'Unknown' %></p>
+                      <% } %>
                     </td>
                     <td class="py-3.5 px-4 text-gray-700 font-medium">
-                      <%= t.buyerId ? t.buyerId.name : 'Unknown' %>
-                    </td>
-                    <td class="py-3.5 px-4 text-gray-700">
-                      <%= t.sellerId ? t.sellerId.name : 'Unknown' %>
+                      <% if (isExchange) { %>
+                        <span class="text-xs font-semibold text-gray-800"><%= t.buyerId ? t.buyerId.name : 'User A' %> ⇄ <%= t.sellerId ? t.sellerId.name : 'User B' %></span>
+                      <% } else { %>
+                        <%= t.buyerId ? t.buyerId.name : 'Unknown' %>
+                      <% } %>
                     </td>
                     <td class="py-3.5 px-4 font-bold text-gray-900">
                       <% if (t.type === 'purchase') { %>
-                        ₹<%= Number(t.amount || 0).toLocaleString('en-IN') %>
+                        ₹<%= Number(t.totalPaid || t.amount || 0).toLocaleString('en-IN') %>
                       <% } else { %>
-                        <span class="text-xs text-indigo-700 font-medium truncate max-w-[120px] block">
-                          Trade: <%= t.exchangeItemId ? t.exchangeItemId.title : 'Item' %>
+                        <span class="text-xs text-indigo-700 font-medium block">
+                          Wardrobe Swap
+                          <% if (t.cashTopUp && t.cashTopUp > 0) { %>
+                            <span class="text-[11px] text-emerald-700 font-bold block">+ ₹<%= Number(t.cashTopUp).toLocaleString('en-IN') %> top-up</span>
+                          <% } %>
                         </span>
                       <% } %>
                     </td>
                     <td class="py-3.5 px-4">
-                      <span class="inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase
-                        <%= t.status === 'completed' || t.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : '' %>
-                        <%= t.status === 'pending' ? 'bg-amber-100 text-amber-800' : '' %>
-                        <%= t.status === 'rejected' ? 'bg-rose-100 text-rose-800' : '' %>
-                      ">
-                        <%= t.status %>
-                      </span>
+                      <% if (hasTwoShipments) { %>
+                        <div class="space-y-1.5 min-w-[200px]" id="badge-<%= t._id %>">
+                          <div class="p-1.5 rounded-lg bg-indigo-50/60 border border-indigo-100 flex items-center justify-between text-[11px]">
+                            <div>
+                              <span class="font-bold text-indigo-900">Shipment A:</span>
+                              <span class="font-mono text-[10px] text-gray-500 block"><%= shipA.trackingNumber %></span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full font-bold text-[10px] <%= shipA.status === 'Delivered' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800' %>">
+                              <%= shipA.status %>
+                            </span>
+                          </div>
+                          <div class="p-1.5 rounded-lg bg-purple-50/60 border border-purple-100 flex items-center justify-between text-[11px]">
+                            <div>
+                              <span class="font-bold text-purple-900">Shipment B:</span>
+                              <span class="font-mono text-[10px] text-gray-500 block"><%= shipB.trackingNumber %></span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full font-bold text-[10px] <%= shipB.status === 'Delivered' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800' %>">
+                              <%= shipB.status %>
+                            </span>
+                          </div>
+                        </div>
+                      <% } else { %>
+                        <% 
+                          let statusColor = 'bg-gray-100 text-gray-800 border-gray-200';
+                          if (currentOrderStatus === 'Order Placed') statusColor = 'bg-blue-50 text-blue-800 border-blue-200';
+                          else if (currentOrderStatus === 'Confirmed') statusColor = 'bg-cyan-50 text-cyan-800 border-cyan-200';
+                          else if (currentOrderStatus === 'Dispatched' || currentOrderStatus === 'In Transit' || currentOrderStatus === 'Package Dispatched') statusColor = 'bg-indigo-50 text-indigo-800 border-indigo-200';
+                          else if (currentOrderStatus === 'Out for Delivery') statusColor = 'bg-orange-50 text-orange-800 border-orange-200';
+                          else if (currentOrderStatus === 'Delivered' || currentOrderStatus === 'Completed') statusColor = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+                          else if (currentOrderStatus === 'Cancelled') statusColor = 'bg-rose-50 text-rose-800 border-rose-200';
+                        %>
+                        <span id="badge-<%= t._id %>" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold text-[11px] border <%= statusColor %> shadow-2xs">
+                          <span class="w-1.5 h-1.5 rounded-full <%= currentOrderStatus === 'Cancelled' ? 'bg-rose-500' : (currentOrderStatus === 'Completed' || currentOrderStatus === 'Delivered' ? 'bg-emerald-500' : 'bg-indigo-500 animate-pulse') %>"></span>
+                          <%= currentOrderStatus %>
+                        </span>
+                      <% } %>
                     </td>
-                    <td class="py-3.5 px-4 text-gray-400">
-                      <%= new Date(t.createdAt).toLocaleDateString('en-IN') %>
+                    <td class="py-3.5 px-4 text-gray-500 text-[11px]">
+                      <%= new Date(t.updatedAt || t.createdAt).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                      <%
+                        const safeShipA = shipA ? { trackingNumber: shipA.trackingNumber, status: shipA.status, title: (t.exchangeItemId ? t.exchangeItemId.title : 'Product A'), sender: (t.buyerId ? t.buyerId.name : 'User A'), receiver: (t.sellerId ? t.sellerId.name : 'User B') } : null;
+                        const safeShipB = shipB ? { trackingNumber: shipB.trackingNumber, status: shipB.status, title: (t.listingId ? t.listingId.title : 'Product B'), sender: (t.sellerId ? t.sellerId.name : 'User B'), receiver: (t.buyerId ? t.buyerId.name : 'User A') } : null;
+                      %>
+                      <button 
+                        type="button" 
+                        onclick='openStatusModal("<%= t._id %>", "<%= currentOrderStatus %>", "<%= (t.listingId ? t.listingId.title : 'Order').replace(/'/g, "\\'") %>", "<%= (t.buyerId ? t.buyerId.name : '').replace(/'/g, "\\'") %>", <%= isExchange %>, <%= JSON.stringify(safeShipA) %>, <%= JSON.stringify(safeShipB) %>)'
+                        class="px-3 py-1.5 rounded-xl bg-gray-900 hover:bg-black text-white font-bold text-xs shadow-xs hover:shadow transition-all inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <i data-lucide="edit" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Manage Status</span>
+                      </button>
                     </td>
                   </tr>
                 <% }) %>
@@ -113,5 +184,235 @@
   </div>
 
 </div>
+
+<!-- Admin Order Status Update Modal -->
+<div id="admin-status-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-150">
+    <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 block">Admin Order & Shipment Logistics</span>
+        <h3 class="font-display font-extrabold text-lg text-gray-900" id="modal-order-title">Update Status</h3>
+      </div>
+      <button type="button" onclick="closeStatusModal()" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 cursor-pointer">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <form id="admin-status-form" onsubmit="submitStatusUpdate(event)" class="mt-5 space-y-4">
+      <input type="hidden" id="modal-transaction-id" name="transactionId">
+
+      <!-- Shipment Target Selection (For 2-way Swaps) -->
+      <div id="modal-shipment-target-box" class="hidden space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700">Target Shipment to Advance *</label>
+        <select 
+          id="modal-shipment-target-select" 
+          name="shipmentTarget" 
+          class="w-full bg-gray-50 border border-gray-300 rounded-xl py-2 px-3 text-xs font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          onchange="handleShipmentTargetSelectionChange(this.value)"
+        >
+          <option value="all">📦 Both Shipments (All Parcels)</option>
+          <option value="shipmentA" id="opt-shipment-a">Shipment A</option>
+          <option value="shipmentB" id="opt-shipment-b">Shipment B</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Select Milestone *</label>
+        <select 
+          id="modal-status-select" 
+          name="orderStatus" 
+          required 
+          class="w-full bg-gray-50 border border-gray-300 rounded-xl py-2.5 px-3.5 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+          onchange="handleStatusSelectionChange(this.value)"
+        >
+          <% orderStatuses.forEach(st => { %>
+            <option value="<%= st %>"><%= st %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <!-- Critical Action Warning Banner -->
+      <div id="critical-confirm-box" class="hidden p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+        <div class="flex items-center gap-1.5 font-bold">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+          <span id="critical-confirm-title">Critical Status Change</span>
+        </div>
+        <p id="critical-confirm-desc" class="text-[11px] text-amber-800">Please confirm this action.</p>
+        <label class="flex items-center gap-2 pt-1 font-semibold cursor-pointer">
+          <input type="checkbox" id="critical-confirm-checkbox" class="rounded text-amber-600 focus:ring-amber-500">
+          <span>I verify and confirm this milestone update.</span>
+        </label>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Status Update Note / Courier Comment (Optional)</label>
+        <input 
+          type="text" 
+          id="modal-status-note" 
+          name="note" 
+          placeholder="e.g. Parcel picked up from sender doorstep" 
+          class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs"
+        >
+      </div>
+
+      <!-- Feedback Area -->
+      <div id="modal-feedback" class="hidden p-3 rounded-xl text-xs font-bold"></div>
+
+      <div class="pt-2 flex items-center justify-end space-x-3">
+        <button type="button" onclick="closeStatusModal()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          id="modal-submit-btn" 
+          class="px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-md inline-flex items-center gap-2 transition-all cursor-pointer"
+        >
+          <span id="modal-btn-text">Save Status Update</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let currentActiveStatus = '';
+  let activeShipA = null;
+  let activeShipB = null;
+
+  function openStatusModal(orderId, currentStatus, itemTitle, buyerName, isExchange, shipA, shipB) {
+    currentActiveStatus = currentStatus;
+    activeShipA = shipA;
+    activeShipB = shipB;
+
+    document.getElementById('modal-transaction-id').value = orderId;
+    document.getElementById('modal-order-title').textContent = (isExchange ? 'Swap #' : 'Order #') + orderId.slice(-6).toUpperCase() + ' (' + itemTitle.slice(0, 18) + ')';
+    
+    const targetBox = document.getElementById('modal-shipment-target-box');
+    const optA = document.getElementById('opt-shipment-a');
+    const optB = document.getElementById('opt-shipment-b');
+    const targetSelect = document.getElementById('modal-shipment-target-select');
+
+    if (isExchange && shipA && shipB) {
+      targetBox.classList.remove('hidden');
+      optA.textContent = `📦 Shipment A: ${shipA.title} (${shipA.sender} → ${shipA.receiver}) [Current: ${shipA.status}]`;
+      optB.textContent = `📦 Shipment B: ${shipB.title} (${shipB.sender} → ${shipB.receiver}) [Current: ${shipB.status}]`;
+      targetSelect.value = 'all';
+    } else {
+      targetBox.classList.add('hidden');
+    }
+
+    const select = document.getElementById('modal-status-select');
+    select.value = currentStatus;
+
+    document.getElementById('modal-status-note').value = '';
+    document.getElementById('modal-feedback').classList.add('hidden');
+    
+    handleStatusSelectionChange(currentStatus);
+
+    const modal = document.getElementById('admin-status-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function handleShipmentTargetSelectionChange(target) {
+    const select = document.getElementById('modal-status-select');
+    if (target === 'shipmentA' && activeShipA) {
+      select.value = activeShipA.status || 'Confirmed';
+    } else if (target === 'shipmentB' && activeShipB) {
+      select.value = activeShipB.status || 'Confirmed';
+    } else {
+      select.value = currentActiveStatus;
+    }
+    handleStatusSelectionChange(select.value);
+  }
+
+  function closeStatusModal() {
+    const modal = document.getElementById('admin-status-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = 'auto';
+  }
+
+  function handleStatusSelectionChange(selectedStatus) {
+    const confirmBox = document.getElementById('critical-confirm-box');
+    const title = document.getElementById('critical-confirm-title');
+    const desc = document.getElementById('critical-confirm-desc');
+    const checkbox = document.getElementById('critical-confirm-checkbox');
+
+    checkbox.checked = false;
+
+    if (selectedStatus === 'Delivered' || selectedStatus === 'Completed') {
+      confirmBox.classList.remove('hidden');
+      title.textContent = 'Confirm Delivery Milestone';
+      desc.textContent = 'Marking as Delivered advances the shipment. When BOTH shipments are Delivered, the entire swap is marked completed and wardrobe item ownership is automatically transferred!';
+    } else if (selectedStatus === 'Cancelled') {
+      confirmBox.classList.remove('hidden');
+      title.textContent = 'Confirm Order Cancellation';
+      desc.textContent = 'Warning: Cancelling will mark this order/exchange cancelled and automatically release the items back to active marketplace listings.';
+    } else {
+      confirmBox.classList.add('hidden');
+    }
+  }
+
+  async function submitStatusUpdate(e) {
+    e.preventDefault();
+    const orderId = document.getElementById('modal-transaction-id').value;
+    const selectedStatus = document.getElementById('modal-status-select').value;
+    const note = document.getElementById('modal-status-note').value;
+    const shipmentTarget = document.getElementById('modal-shipment-target-select') ? document.getElementById('modal-shipment-target-select').value : 'all';
+    const checkbox = document.getElementById('critical-confirm-checkbox');
+    const confirmBox = document.getElementById('critical-confirm-box');
+    const feedback = document.getElementById('modal-feedback');
+    const btn = document.getElementById('modal-submit-btn');
+    const btnText = document.getElementById('modal-btn-text');
+
+    if (!confirmBox.classList.contains('hidden') && !checkbox.checked) {
+      feedback.className = 'p-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 block';
+      feedback.textContent = 'Please check the confirmation box before applying critical milestone "' + selectedStatus + '".';
+      return;
+    }
+
+    btn.disabled = true;
+    btnText.textContent = 'Updating...';
+
+    try {
+      const response = await fetch('/api/admin/transactions/' + orderId + '/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          orderStatus: selectedStatus,
+          shipmentTarget: shipmentTarget,
+          note: note
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update order status');
+      }
+
+      feedback.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 block';
+      feedback.textContent = '✓ Status successfully updated to "' + selectedStatus + '"!';
+
+      setTimeout(() => {
+        closeStatusModal();
+        window.location.reload();
+      }, 700);
+
+    } catch (err) {
+      feedback.className = 'p-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 block';
+      feedback.textContent = 'Error: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      btnText.textContent = 'Save Status Update';
+    }
+  }
+</script>
+
 
 <%- include('../../partials/footer') %>

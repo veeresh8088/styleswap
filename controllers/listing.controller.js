@@ -1,6 +1,8 @@
 const Listing = require('../models/Listing');
 const Category = require('../models/Category');
 const User = require('../models/User');
+const Offer = require('../models/Offer');
+const SwapRequest = require('../models/SwapRequest');
 const { LISTING_STATUS, LISTING_TYPES, CONDITIONS, ROLES, SIZES, ALL_SIZES } = require('../config/constants');
 const { generateListingRecommendations } = require('../services/ai.service');
 
@@ -151,22 +153,56 @@ exports.getListingById = async (req, res, next) => {
     await listing.save({ validateBeforeSave: false });
 
     // Fetch related listings in the same category
-    const relatedListings = await Listing.find({
-      category: listing.category._id,
-      _id: { $ne: listing._id },
-      status: LISTING_STATUS.APPROVED
-    })
-      .limit(4)
-      .populate('sellerId', 'name profileImage');
+    const categoryId = listing.category ? (listing.category._id || listing.category) : null;
+    const relatedListings = categoryId
+      ? await Listing.find({
+          category: categoryId,
+          _id: { $ne: listing._id },
+          status: LISTING_STATUS.APPROVED
+        })
+          .limit(4)
+          .populate('sellerId', 'name profileImage')
+      : [];
 
     // If user is logged in, find their own active listings that can be offered for exchange
     let userExchangeableItems = [];
+    let userActiveOffer = null;
+    let sellerIncomingOffers = [];
+    let sellerIncomingSwaps = [];
+
+    const sellerObjId = listing.sellerId ? (listing.sellerId._id || listing.sellerId) : null;
+    const isOwner = Boolean(
+      req.user &&
+      sellerObjId &&
+      req.user._id.toString() === sellerObjId.toString()
+    );
+
     if (req.user) {
-      userExchangeableItems = await Listing.find({
-        sellerId: req.user._id,
-        _id: { $ne: listing._id },
-        status: LISTING_STATUS.APPROVED
-      });
+      if (!isOwner) {
+        userExchangeableItems = await Listing.find({
+          sellerId: req.user._id,
+          _id: { $ne: listing._id },
+          status: LISTING_STATUS.APPROVED
+        });
+
+        userActiveOffer = await Offer.findOne({
+          listingId: listing._id,
+          buyerId: req.user._id
+        }).sort({ createdAt: -1 });
+      } else {
+        // If owner, fetch pending offers & swaps to manage directly
+        sellerIncomingOffers = await Offer.find({
+          listingId: listing._id,
+          status: 'pending'
+        }).populate('buyerId', 'name profileImage');
+
+        sellerIncomingSwaps = await SwapRequest.find({
+          targetListingId: listing._id,
+          status: 'pending'
+        })
+          .populate('offeredListingId')
+          .populate('proposerId', 'name profileImage');
+      }
     }
 
     if (req.originalUrl.startsWith('/api/')) {
@@ -184,10 +220,88 @@ exports.getListingById = async (req, res, next) => {
       listing,
       relatedListings,
       userExchangeableItems,
+      userActiveOffer,
+      sellerIncomingOffers,
+      sellerIncomingSwaps,
       categories,
       conditions: CONDITIONS,
       sizes: ALL_SIZES,
-      isOwner: req.user && req.user._id.toString() === listing.sellerId._id.toString()
+      isOwner
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc Render Dedicated Make an Offer Page
+exports.renderOfferPage = async (req, res, next) => {
+  try {
+    const listing = await Listing.findById(req.params.id)
+      .populate('sellerId', 'name email profileImage location')
+      .populate('category', 'name slug');
+
+    if (!listing) {
+      req.flash('error', 'Listing not found.');
+      return res.redirect('/listings');
+    }
+
+    const sellerId = listing.sellerId ? (listing.sellerId._id || listing.sellerId) : null;
+    if (sellerId && req.user._id.toString() === sellerId.toString()) {
+      req.flash('error', 'You cannot make an offer on your own listing.');
+      return res.redirect(`/listings/${listing._id}`);
+    }
+
+    if (listing.status !== LISTING_STATUS.APPROVED) {
+      req.flash('error', 'This item is no longer available.');
+      return res.redirect(`/listings/${listing._id}`);
+    }
+
+    res.render('pages/listings/offer', {
+      title: `Make an Offer on ${listing.title} - Styleswap`,
+      listing
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc Render Dedicated Propose Swap Page
+exports.renderSwapPage = async (req, res, next) => {
+  try {
+    const listing = await Listing.findById(req.params.id)
+      .populate('sellerId', 'name email profileImage location')
+      .populate('category', 'name slug');
+
+    if (!listing) {
+      req.flash('error', 'Listing not found.');
+      return res.redirect('/listings');
+    }
+
+    const swapSellerId = listing.sellerId ? (listing.sellerId._id || listing.sellerId) : null;
+    if (swapSellerId && req.user._id.toString() === swapSellerId.toString()) {
+      req.flash('error', 'You cannot swap with your own listing.');
+      return res.redirect(`/listings/${listing._id}`);
+    }
+
+    if (listing.status !== LISTING_STATUS.APPROVED) {
+      req.flash('error', 'This item is no longer available.');
+      return res.redirect(`/listings/${listing._id}`);
+    }
+
+    // Find current user's active wardrobe items (approved or pending)
+    const userExchangeableItems = await Listing.find({
+      sellerId: req.user._id,
+      _id: { $ne: listing._id },
+      status: { $in: [LISTING_STATUS.APPROVED, LISTING_STATUS.PENDING] }
+    });
+
+    const categories = await Category.find({ isActive: true }).sort({ name: 1 });
+
+    res.render('pages/listings/swap', {
+      title: `Propose Swap for ${listing.title} - Styleswap`,
+      listing,
+      userExchangeableItems,
+      categories
     });
   } catch (error) {
     next(error);

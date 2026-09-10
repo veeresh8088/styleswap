@@ -146,44 +146,146 @@
           <% if (!isOwner) { %>
             <% if (listing.status === 'approved') { %>
               
-              <!-- Direct Buy Button -->
+              <!-- Offer Status Badge if Buyer already submitted an offer -->
+              <% if (typeof userActiveOffer !== 'undefined' && userActiveOffer) { %>
+                <div class="p-3 rounded-2xl border text-xs font-semibold flex items-center justify-between <%= userActiveOffer.status === 'accepted' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : (userActiveOffer.status === 'rejected' ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-amber-50 border-amber-200 text-amber-900') %>">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full <%= userActiveOffer.status === 'accepted' ? 'bg-emerald-500' : (userActiveOffer.status === 'rejected' ? 'bg-rose-500' : 'bg-amber-500 animate-pulse') %>"></span>
+                    <span>Your Offer: <strong>₹<%= Number(userActiveOffer.offeredPrice).toLocaleString('en-IN') %></strong></span>
+                  </div>
+                  <span class="font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-full <%= userActiveOffer.status === 'accepted' ? 'bg-emerald-200 text-emerald-800' : (userActiveOffer.status === 'rejected' ? 'bg-rose-200 text-rose-800' : 'bg-amber-200 text-amber-800') %>">
+                    <%= userActiveOffer.status === 'accepted' ? 'Offer Accepted' : (userActiveOffer.status === 'rejected' ? 'Offer Rejected' : 'Offer Pending') %>
+                  </span>
+                </div>
+              <% } %>
+
+              <!-- Buy Direct & Add to Bag Buttons -->
               <% if (listing.type === 'sell' || listing.type === 'both') { %>
+                <% const buyPrice = (typeof userActiveOffer !== 'undefined' && userActiveOffer && userActiveOffer.status === 'accepted') ? userActiveOffer.offeredPrice : listing.price; %>
                 <% if (currentUser) { %>
-                  <a 
-                    href="/checkout/<%= listing._id %>"
-                    class="w-full py-3.5 rounded-2xl bg-gray-900 hover:bg-black text-white text-base font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
-                  >
-                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                    Buy Direct (₹<%= Number(listing.price).toLocaleString('en-IN') %>)
-                  </a>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <a 
+                      href="/checkout/<%= listing._id %>"
+                      class="w-full py-3.5 px-3 rounded-2xl bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+                    >
+                      <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                      <span>Buy Direct (₹<%= Number(buyPrice).toLocaleString('en-IN') %>)</span>
+                    </a>
+
+                    <form action="/cart/add/<%= listing._id %>" method="POST" class="w-full">
+                      <button 
+                        type="submit" 
+                        class="w-full py-3.5 px-3 rounded-2xl bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-100 text-indigo-950 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                      >
+                        <i data-lucide="shopping-bag" class="w-4 h-4 text-indigo-600"></i>
+                        <span>Add to Bag</span>
+                      </button>
+                    </form>
+                  </div>
                 <% } else { %>
-                  <a 
-                    href="/auth/login?redirect=/checkout/<%= listing._id %>" 
-                    class="w-full py-3.5 rounded-2xl bg-gray-900 hover:bg-black text-white text-base font-bold flex items-center justify-center gap-2"
-                  >
-                    <i data-lucide="log-in" class="w-5 h-5"></i>
-                    Sign in to Buy (₹<%= Number(listing.price).toLocaleString('en-IN') %>)
-                  </a>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <a 
+                      href="/auth/login?redirect=/checkout/<%= listing._id %>" 
+                      class="w-full py-3.5 px-4 rounded-2xl bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2"
+                    >
+                      <i data-lucide="log-in" class="w-4 h-4"></i>
+                      <span>Sign in to Buy</span>
+                    </a>
+                    <a 
+                      href="/auth/login?redirect=/listings/<%= listing._id %>" 
+                      class="w-full py-3.5 px-4 rounded-2xl bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-100 text-indigo-950 text-xs sm:text-sm font-bold flex items-center justify-center gap-2"
+                    >
+                      <i data-lucide="shopping-bag" class="w-4 h-4 text-indigo-600"></i>
+                      <span>Add to Bag</span>
+                    </a>
+                  </div>
                 <% } %>
               <% } %>
 
-              <!-- Propose Exchange / Barter Button (Available on all thrift pieces) -->
+              <!-- Dual Communication Buttons: Message Seller & Make an Offer -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <% if (currentUser) { %>
+                  <!-- Message Seller Button (Direct page + modal) -->
+                  <div class="relative flex">
+                    <button 
+                      type="button" 
+                      onclick="openChatModal()"
+                      class="flex-1 py-2.5 pl-3 pr-2 rounded-l-2xl bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <i data-lucide="message-circle" class="w-4 h-4 text-indigo-600"></i>
+                      <span>Message</span>
+                    </button>
+                    <a 
+                      href="/messages/<%= listing._id %>"
+                      title="Open Dedicated Full Chat Page"
+                      class="py-2.5 px-2.5 rounded-r-2xl bg-gray-50 border-y border-r border-gray-300 hover:bg-gray-100 text-gray-600 flex items-center justify-center text-xs"
+                    >
+                      <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                    </a>
+                  </div>
+
+                  <!-- Make an Offer Button (Direct page + modal) -->
+                  <div class="relative flex">
+                    <button 
+                      type="button" 
+                      onclick="openOfferModal()"
+                      class="flex-1 py-2.5 pl-3 pr-2 rounded-l-2xl bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-900 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <i data-lucide="tag" class="w-4 h-4 text-amber-600"></i>
+                      <span>Make Offer</span>
+                    </button>
+                    <a 
+                      href="/listings/<%= listing._id %>/offer"
+                      title="Open Dedicated Offer Page"
+                      class="py-2.5 px-2.5 rounded-r-2xl bg-amber-100/70 border-y border-r border-amber-200 hover:bg-amber-200 text-amber-800 flex items-center justify-center text-xs"
+                    >
+                      <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                    </a>
+                  </div>
+                <% } else { %>
+                  <a 
+                    href="/auth/login?redirect=/messages/<%= listing._id %>"
+                    class="w-full py-2.5 px-3 rounded-2xl bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <i data-lucide="message-circle" class="w-4 h-4 text-indigo-600"></i>
+                    <span>Message Seller</span>
+                  </a>
+                  <a 
+                    href="/auth/login?redirect=/listings/<%= listing._id %>/offer"
+                    class="w-full py-2.5 px-3 rounded-2xl bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-900 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <i data-lucide="tag" class="w-4 h-4 text-amber-600"></i>
+                    <span>Make an Offer</span>
+                  </a>
+                <% } %>
+              </div>
+
+              <!-- Propose Exchange / Barter Button (Direct page + modal) -->
               <% if (currentUser) { %>
-                <button 
-                  type="button" 
-                  onclick="openModal('exchange-modal')"
-                  class="w-full py-3.5 rounded-2xl bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-100 text-indigo-900 text-base font-bold flex items-center justify-center gap-2 transition-colors shadow-xs hover:shadow"
+                <div class="flex items-center gap-2">
+                  <a 
+                    href="/listings/<%= listing._id %>/swap"
+                    class="flex-1 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-xs hover:shadow cursor-pointer"
+                  >
+                    <i data-lucide="repeat" class="w-4 h-4"></i>
+                    <span>Propose Item Swap / Barter</span>
+                  </a>
+                  <button 
+                    type="button" 
+                    onclick="openModal('exchange-modal')"
+                    title="Quick Swap Modal"
+                    class="py-3.5 px-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer"
+                  >
+                    <i data-lucide="layers" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              <% } else { %>
+                <a 
+                  href="/auth/login?redirect=/listings/<%= listing._id %>/swap" 
+                  class="w-full py-3.5 rounded-2xl bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-100 text-indigo-900 text-base font-bold flex items-center justify-center gap-2 transition-colors shadow-xs hover:shadow cursor-pointer"
                 >
                   <i data-lucide="repeat" class="w-5 h-5 text-indigo-600"></i>
                   Propose Item Swap / Barter
-                </button>
-              <% } else { %>
-                <a 
-                  href="/auth/login?redirect=/listings/<%= listing._id %>" 
-                  class="w-full py-3.5 rounded-2xl bg-indigo-50 border-2 border-indigo-200 hover:bg-indigo-100 text-indigo-900 text-base font-bold flex items-center justify-center gap-2 transition-colors"
-                >
-                  <i data-lucide="log-in" class="w-5 h-5 text-indigo-600"></i>
-                  Sign in to Propose Swap
                 </a>
               <% } %>
 
@@ -216,36 +318,90 @@
 
           <% } else { %>
             <!-- Owner Control Panel -->
-            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-3">
-              <p class="text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
-                <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> You own this listing
-              </p>
+            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-4">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                  <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> You own this listing
+                </p>
+                <span class="text-[11px] font-bold text-indigo-700">Seller Dashboard</span>
+              </div>
               <div class="flex items-center gap-3">
-                <a href="/listings/<%= listing._id %>/edit" class="flex-1 py-2.5 text-center bg-white border border-gray-300 rounded-xl text-xs font-bold text-gray-900 hover:bg-gray-100 transition-colors">
+                <a href="/listings/<%= listing._id %>/edit" class="flex-1 py-2 text-center bg-white border border-gray-300 rounded-xl text-xs font-bold text-gray-900 hover:bg-gray-100 transition-colors">
                   Edit Item
                 </a>
                 <form action="/listings/<%= listing._id %>/delete" method="POST" class="flex-1" onsubmit="return confirm('Delete this listing?');">
-                  <button type="submit" class="w-full py-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors">
+                  <button type="submit" class="w-full py-2 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors">
                     Delete
                   </button>
                 </form>
               </div>
+
+              <!-- Pending Offers for Seller -->
+              <% if (typeof sellerIncomingOffers !== 'undefined' && sellerIncomingOffers.length > 0) { %>
+                <div class="pt-3 border-t border-gray-200 space-y-2.5">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-gray-600 block">Pending Price Offers (<%= sellerIncomingOffers.length %>)</span>
+                  <% sellerIncomingOffers.forEach(off => { %>
+                    <div class="bg-white p-3 rounded-xl border border-gray-200 space-y-2 text-xs" id="offer-card-<%= off._id %>">
+                      <div class="flex items-center justify-between">
+                        <span class="font-bold text-gray-900"><%= off.buyerId ? off.buyerId.name : 'Buyer' %></span>
+                        <span class="font-extrabold text-emerald-700 text-sm">₹<%= Number(off.offeredPrice).toLocaleString('en-IN') %></span>
+                      </div>
+                      <% if (off.message) { %>
+                        <p class="text-gray-500 italic text-[11px]">"<%= off.message %>"</p>
+                      <% } %>
+                      <div class="flex items-center justify-end gap-2 pt-1">
+                        <button type="button" onclick="respondToOfferAction('<%= off._id %>', 'reject')" class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-bold">Reject</button>
+                        <button type="button" onclick="respondToOfferAction('<%= off._id %>', 'accept')" class="px-3.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-2xs">Accept Offer</button>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+
+              <!-- Pending Swaps for Seller -->
+              <% if (typeof sellerIncomingSwaps !== 'undefined' && sellerIncomingSwaps.length > 0) { %>
+                <div class="pt-3 border-t border-gray-200 space-y-2.5">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">Pending Swap Requests (<%= sellerIncomingSwaps.length %>)</span>
+                  <% sellerIncomingSwaps.forEach(swp => { %>
+                    <div class="bg-white p-3 rounded-xl border border-gray-200 space-y-2 text-xs" id="swap-card-<%= swp._id %>">
+                      <div class="flex items-center space-x-2.5">
+                        <img src="<%= swp.offeredListingId && swp.offeredListingId.images ? swp.offeredListingId.images[0] : '/images/placeholder-item.jpg' %>" class="w-10 h-10 rounded-lg object-cover">
+                        <div class="flex-1 min-w-0">
+                          <p class="font-bold text-gray-900 truncate"><%= swp.offeredListingId ? swp.offeredListingId.title : 'Item' %></p>
+                          <p class="text-[10px] text-gray-500">From: <%= swp.proposerId ? swp.proposerId.name : 'User' %></p>
+                        </div>
+                        <% if (swp.cashTopUp > 0) { %>
+                          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">+₹<%= swp.cashTopUp %></span>
+                        <% } %>
+                      </div>
+                      <div class="flex items-center justify-end gap-1.5 pt-1">
+                        <button type="button" onclick="respondToSwapAction('<%= swp._id %>', 'reject')" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-bold">Reject</button>
+                        <button type="button" onclick="openCounterSwapModal('<%= swp._id %>', '<%= swp.proposerId ? swp.proposerId.name : 'User' %>')" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-800 hover:bg-indigo-100 text-[11px] font-bold">Counter</button>
+                        <button type="button" onclick="respondToSwapAction('<%= swp._id %>', 'accept')" class="px-3 py-1 rounded-lg bg-gray-900 hover:bg-black text-white text-[11px] font-bold">Accept Swap</button>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
             </div>
           <% } %>
         </div>
+
 
         <!-- Seller Profile Card -->
         <div class="pt-6 border-t border-gray-100 flex items-center justify-between">
           <div class="flex items-center space-x-3">
             <img src="<%= listing.sellerId.profileImage || '/images/default-avatar.png' %>" alt="<%= listing.sellerId.name %>" class="w-12 h-12 rounded-full object-cover border border-gray-200">
             <div>
-              <h4 class="text-sm font-bold text-gray-900"><%= listing.sellerId.name %></h4>
+              <h4 class="text-sm font-bold text-gray-900"><%= (listing.sellerId && listing.sellerId.name) ? listing.sellerId.name : 'Styleswap Verified Member' %></h4>
               <p class="text-xs text-gray-500"><%= listing.location || 'India' %></p>
             </div>
           </div>
-          <a href="/user/<%= listing.sellerId._id %>/profile" class="text-xs font-bold text-gray-900 hover:text-black border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-            View Closet
-          </a>
+          <% if (listing.sellerId && listing.sellerId._id) { %>
+            <a href="/user/<%= listing.sellerId._id %>/profile" class="text-xs font-bold text-gray-900 hover:text-black border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+              View Closet
+            </a>
+          <% } %>
         </div>
 
       </div>
@@ -300,7 +456,7 @@
 
 <!-- 1. BUY CONFIRMATION MODAL -->
 <% if (currentUser && !isOwner) { %>
-  <div id="buy-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm items-center justify-center p-4">
+  <div id="buy-modal" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm items-center justify-center p-4" style="display: none;">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
       
       <div class="flex items-center justify-between pb-4 border-b border-gray-100">
@@ -360,7 +516,7 @@
 
 <!-- 2. PROPOSE EXCHANGE MODAL -->
 <% if (currentUser && !isOwner) { %>
-  <div id="exchange-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm items-center justify-center p-4">
+  <div id="exchange-modal" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm items-center justify-center p-4" style="display: none;">
     <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
       
       <!-- Modal Header -->
@@ -423,7 +579,8 @@
                 <div 
                   id="card-item-<%= myItem._id %>"
                   data-item-id="<%= myItem._id %>"
-                  onclick="selectExchangeItem(this, '<%= myItem._id %>', '<%= myItem.title.replace(/'/g, "\\'") %>')"
+                  data-item-title="<%= (myItem.title || '').replace(/"/g, '&quot;') %>"
+                  onclick="selectExchangeItem(this)"
                   class="exchange-select-card cursor-pointer p-3 rounded-2xl border border-gray-200 bg-white hover:border-indigo-400 hover:shadow-xs flex items-center space-x-3 transition-all relative group"
                 >
                   <img 
@@ -475,12 +632,12 @@
               <select name="offerCategory" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
                 <% if (typeof categories !== 'undefined' && categories && categories.length > 0) { %>
                   <% categories.forEach(cat => { %>
-                    <option value="<%= cat._id %>" <%= cat._id.toString() === listing.category._id.toString() ? 'selected' : '' %>>
+                    <option value="<%= cat._id %>" <%= (listing.category && cat._id.toString() === (listing.category._id || listing.category).toString()) ? 'selected' : '' %>>
                       <%= cat.name %>
                     </option>
                   <% }) %>
-                <% } else { %>
-                  <option value="<%= listing.category._id %>"><%= listing.category.name %></option>
+                <% } else if (listing.category) { %>
+                  <option value="<%= listing.category._id || listing.category %>"><%= listing.category.name || 'Category' %></option>
                 <% } %>
               </select>
             </div>
@@ -521,7 +678,7 @@
               <input 
                 type="number" 
                 name="offerPrice" 
-                id="offer-price-input"
+                id="exchange-item-valuation"
                 min="0"
                 placeholder="<%= listing.price || 999 %>" 
                 class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-3.5 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -595,28 +752,8 @@
     </div>
   </div>
 
-  <!-- Bulletproof Swap Modal Script -->
+  <!-- Swap Modal Script -->
   <script>
-    // Fail-safe Modal Open/Close
-    window.openModal = function(id) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.classList.remove('hidden');
-        el.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-        if (window.lucide) window.lucide.createIcons();
-      }
-    };
-
-    window.closeModal = function(id) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.classList.add('hidden');
-        el.classList.remove('flex');
-        document.body.style.overflow = 'auto';
-      }
-    };
-
     // Tab Switcher between Closet Items & Quick Offer
     window.switchSwapTab = function(mode) {
       const paneCloset = document.getElementById('pane-swap-closet');
@@ -638,10 +775,10 @@
         }
         // Check if an item is currently selected
         if (hiddenItemId && hiddenItemId.value) {
-          submitBtn.disabled = false;
+          if (submitBtn) submitBtn.disabled = false;
         } else {
-          submitBtn.disabled = true;
-          submitBtnText.textContent = 'Select an Item to Swap';
+          if (submitBtn) submitBtn.disabled = true;
+          if (submitBtnText) submitBtnText.textContent = 'Select an Item to Swap';
         }
       } else if (mode === 'quick' && paneQuick) {
         paneQuick.classList.remove('hidden');
@@ -658,7 +795,11 @@
     };
 
     // Item Selection Handler
-    window.selectExchangeItem = function(cardEl, itemId, itemTitle) {
+    window.selectExchangeItem = function(cardEl) {
+      if (!cardEl) return;
+      const itemId = cardEl.getAttribute('data-item-id');
+      const itemTitle = cardEl.getAttribute('data-item-title') || '';
+
       // Remove active state from all cards
       document.querySelectorAll('.exchange-select-card').forEach(function(c) {
         c.classList.remove('border-indigo-600', 'ring-2', 'ring-indigo-500/30', 'bg-indigo-50/50');
@@ -668,12 +809,10 @@
       });
 
       // Highlight selected card
-      if (cardEl) {
-        cardEl.classList.remove('border-gray-200', 'bg-white');
-        cardEl.classList.add('border-indigo-600', 'ring-2', 'ring-indigo-500/30', 'bg-indigo-50/50');
-        const checkIcon = cardEl.querySelector('.selection-check');
-        if (checkIcon) checkIcon.classList.remove('hidden');
-      }
+      cardEl.classList.remove('border-gray-200', 'bg-white');
+      cardEl.classList.add('border-indigo-600', 'ring-2', 'ring-indigo-500/30', 'bg-indigo-50/50');
+      const checkIcon = cardEl.querySelector('.selection-check');
+      if (checkIcon) checkIcon.classList.remove('hidden');
 
       // Update hidden input
       const hiddenInput = document.getElementById('selected-exchange-item-id');
@@ -713,5 +852,726 @@
     };
   </script>
 <% } %>
+
+<!-- 3. PRODUCT-LINKED CHAT MODAL (FEATURE 2) -->
+<% if (currentUser) { %>
+  <div id="chat-modal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm items-center justify-center p-4" style="display: none;">
+    <div class="bg-white rounded-3xl max-w-lg w-full h-[580px] flex flex-col shadow-2xl border border-gray-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Chat Header -->
+      <div class="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <img src="<%= isOwner ? '/images/default-avatar.png' : (listing.sellerId && listing.sellerId.profileImage ? listing.sellerId.profileImage : '/images/default-avatar.png') %>" class="w-10 h-10 rounded-full object-cover border border-gray-200" alt="">
+          <div>
+            <h4 class="font-bold text-sm text-gray-900"><%= isOwner ? 'Chat with Inquirers' : (listing.sellerId && listing.sellerId.name ? listing.sellerId.name : 'Seller') %></h4>
+            <p class="text-[11px] text-gray-500 truncate max-w-[220px]">Regarding "<%= listing.title %>"</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModal('chat-modal')" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Chat Messages Scrollable Box -->
+      <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50/50 text-xs">
+        <div class="text-center text-gray-400 text-[11px] py-4" id="chat-loading-notice">
+          Loading conversation...
+        </div>
+      </div>
+
+      <!-- Chat Input Footer -->
+      <form id="chat-send-form" onsubmit="sendChatMessage(event)" class="p-3 bg-white border-t border-gray-200 flex items-center gap-2 flex-shrink-0">
+        <input 
+          type="text" 
+          id="chat-input-text" 
+          placeholder="Type your message about this piece..." 
+          required 
+          autocomplete="off"
+          class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+        >
+        <button type="submit" id="chat-send-btn" class="p-2.5 rounded-xl bg-gray-900 hover:bg-black text-white shadow-xs transition-colors">
+          <i data-lucide="send" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. MAKE AN OFFER MODAL (FEATURE 2) -->
+  <div id="offer-modal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm items-center justify-center p-4" style="display: none;">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <i data-lucide="tag" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-extrabold text-lg text-gray-900">Make an Offer</h3>
+            <p class="text-[11px] text-gray-500">Negotiate a fair pre-loved price in ₹</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModal('offer-modal')" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="submit-offer-form" onsubmit="submitPriceOffer(event)" class="mt-5 space-y-4">
+        <!-- Item Asking Price Callout -->
+        <div class="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 block">Product Asking Price</span>
+            <p class="text-xs font-bold text-gray-900 truncate max-w-[200px]"><%= listing.title %></p>
+          </div>
+          <span class="text-xl font-extrabold text-gray-900">₹<%= Number(listing.price).toLocaleString('en-IN') %></span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Your Offer Price *</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-gray-500">₹</span>
+            <input 
+              type="number" 
+              id="offer-price-input" 
+              name="offeredPrice" 
+              required 
+              min="1" 
+              max="<%= listing.price || 999999 %>"
+              value="<%= Math.round((listing.price || 500) * 0.85) %>"
+              placeholder="e.g. 900"
+              class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-8 pr-3.5 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600"
+            >
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1">Suggested counter: ~10% to 20% below asking price</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Note to Seller (Optional)</label>
+          <input 
+            type="text" 
+            id="offer-message-input" 
+            name="message" 
+            placeholder="e.g. Ready to purchase right now if accepted!"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+          >
+        </div>
+
+        <div id="offer-feedback" class="hidden p-3 rounded-xl text-xs font-bold"></div>
+
+        <div class="pt-2 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeModal('offer-modal')" class="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button type="submit" id="offer-submit-btn" class="px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-md transition-colors">
+            Send Offer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. SELLER COUNTER SWAP MODAL -->
+  <div id="counter-swap-modal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm items-center justify-center p-4" style="display: none;">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+        <h3 class="font-display font-extrabold text-lg text-gray-900">Make Counter Swap Offer</h3>
+        <button type="button" onclick="closeModal('counter-swap-modal')" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="counter-swap-form" onsubmit="submitCounterSwap(event)" class="mt-4 space-y-4">
+        <input type="hidden" id="counter-swap-id" name="swapId">
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Request Additional Cash Top-Up (₹)</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">₹</span>
+            <input 
+              type="number" 
+              id="counter-cash-input" 
+              name="counterCashTopUp" 
+              min="0" 
+              value="200" 
+              class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-8 pr-3.5 py-2 text-xs font-bold"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Counter Note</label>
+          <input 
+            type="text" 
+            id="counter-note-input" 
+            name="counterNote" 
+            placeholder="e.g. Love the hoodie, can you add ₹200 top-up to balance value?" 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs"
+          >
+        </div>
+
+        <div id="counter-feedback" class="hidden p-3 rounded-xl text-xs font-bold"></div>
+
+        <div class="pt-2 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeModal('counter-swap-modal')" class="px-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs">Send Counter Offer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% } %>
+
+<script>
+  // Global Safe Modal Helpers
+  window.openModal = function(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+      el.style.setProperty('display', 'flex', 'important');
+      document.body.style.overflow = 'hidden';
+      if (window.lucide) window.lucide.createIcons();
+    } else {
+      console.warn('Modal element not found for id:', id);
+    }
+  };
+
+  window.closeModal = function(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+      el.style.setProperty('display', 'none', 'important');
+      document.body.style.overflow = 'auto';
+    }
+  };
+
+  // Close modals when user clicks outside the modal dialog on the dark backdrop
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.id && ['chat-modal', 'offer-modal', 'exchange-modal', 'buy-modal', 'counter-swap-modal'].includes(e.target.id)) {
+      window.closeModal(e.target.id);
+    }
+  });
+
+  // Close modals on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      ['chat-modal', 'offer-modal', 'exchange-modal', 'buy-modal', 'counter-swap-modal'].forEach(function(mId) {
+        window.closeModal(mId);
+      });
+    }
+  });
+
+  // Chat Integration
+  let chatConversationId = '';
+
+  window.openChatModal = function() {
+    window.openModal('chat-modal');
+    window.loadChatMessages();
+  };
+
+  window.loadChatMessages = async function() {
+    const container = document.getElementById('chat-messages-container');
+    if (!container) return;
+
+    const listingId = '<%= listing._id %>';
+    const currentUserId = '<%= currentUser ? currentUser._id : "" %>';
+
+    try {
+      const response = await fetch('/api/chat/conversation/' + listingId);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        container.innerHTML = '<div class="text-center text-rose-500 py-4 font-semibold">Unable to load chat: ' + (data.message || 'Error') + '</div>';
+        return;
+      }
+
+      const conv = data.data || {};
+      chatConversationId = conv._id || '';
+      const messages = conv.messages || [];
+      const sellerIdStr = conv.sellerId ? (conv.sellerId._id || conv.sellerId).toString() : '';
+      const isSeller = sellerIdStr === currentUserId;
+
+      if (messages.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-gray-400 py-8 space-y-1">
+            <i data-lucide="message-square" class="w-8 h-8 mx-auto text-gray-300"></i>
+            <p class="font-bold text-gray-600">No messages yet</p>
+            <p class="text-[11px]">Say hi and ask any question about size, fit, fabric, or pickup!</p>
+          </div>
+        `;
+      } else {
+        container.innerHTML = messages.map(msg => {
+          const senderId = (msg.sender && msg.sender._id) ? msg.sender._id.toString() : (msg.sender ? msg.sender.toString() : '');
+          const isMine = senderId === currentUserId;
+          const senderName = isMine ? 'You' : (msg.sender && msg.sender.name ? msg.sender.name : 'Seller');
+          const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          const isOffer = msg.type === 'offer' || (msg.text && (msg.text.includes('Price Offer') || msg.text.includes('Offer Accepted') || msg.text.includes('Offer Declined')));
+          const isSwap = msg.type === 'swap' || (msg.text && (msg.text.includes('Swap Proposal') || msg.text.includes('Swap Accepted') || msg.text.includes('Swap Declined')));
+
+          if (isOffer) {
+            const status = msg.actionStatus || (msg.text.includes('Accepted') ? 'accepted' : (msg.text.includes('Declined') ? 'rejected' : 'pending'));
+            const offerId = msg.offerId || '';
+            const offeredPrice = (msg.metadata && msg.metadata.offeredPrice) || (msg.text.match(/₹([\d,]+)/) ? msg.text.match(/₹([\d,]+)/)[1] : '');
+            const checkoutUrl = (msg.metadata && msg.metadata.checkoutUrl) || ('/checkout/' + listingId);
+
+            return `
+              <div class="w-full my-2">
+                <div class="rounded-2xl p-3 text-xs shadow-2xs border ${status === 'accepted' ? 'bg-emerald-50/80 border-emerald-200' : (status === 'rejected' ? 'bg-rose-50/80 border-rose-200' : 'bg-amber-50/80 border-amber-200')}">
+                  <div class="flex items-center justify-between pb-1.5 border-b ${status === 'accepted' ? 'border-emerald-200/60' : (status === 'rejected' ? 'border-rose-200/60' : 'border-amber-200/60')}">
+                    <span class="font-extrabold flex items-center gap-1 ${status === 'accepted' ? 'text-emerald-900' : (status === 'rejected' ? 'text-rose-900' : 'text-amber-900')}">
+                      <i data-lucide="tag" class="w-3 h-3"></i> Price Offer ${offeredPrice ? ('₹' + offeredPrice) : ''}
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${status === 'accepted' ? 'bg-emerald-200 text-emerald-800' : (status === 'rejected' ? 'bg-rose-200 text-rose-800' : 'bg-amber-200 text-amber-900 animate-pulse')}">
+                      ${status === 'accepted' ? '✓ Accepted' : (status === 'rejected' ? '✕ Declined' : '⏳ Pending')}
+                    </span>
+                  </div>
+
+                  <p class="mt-2 text-gray-800 leading-relaxed font-medium whitespace-pre-wrap">${msg.text}</p>
+
+                  ${isSeller && status === 'pending' && offerId ? `
+                    <div class="mt-2.5 pt-2 border-t border-amber-200/60 flex items-center gap-2">
+                      <button 
+                        type="button" 
+                        data-offer-id="${offerId.replace(/[^a-f0-9]/gi, '')}"
+                        onclick="respondOfferFromChat(this.dataset.offerId, 'accept', this)"
+                        class="flex-1 py-1.5 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <i data-lucide="check" class="w-3 h-3"></i> <span>Accept</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        data-offer-id="${offerId.replace(/[^a-f0-9]/gi, '')}"
+                        onclick="respondOfferFromChat(this.dataset.offerId, 'reject', this)"
+                        class="py-1.5 px-2.5 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <i data-lucide="x" class="w-3 h-3"></i> <span>Decline</span>
+                      </button>
+                    </div>
+                  ` : ''}
+
+                  ${!isSeller && status === 'pending' && offerId ? `
+                    <div class="mt-2 pt-2 border-t border-amber-200/60 flex items-center justify-between">
+                      <span class="text-[10px] text-amber-800 font-medium">⏳ Pending seller review</span>
+                      <button 
+                        type="button" 
+                        data-offer-id="${offerId.replace(/[^a-f0-9]/gi, '')}"
+                        onclick="respondOfferFromChat(this.dataset.offerId, 'cancel', this)"
+                        class="py-1 px-2.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-[10px] flex items-center gap-1 cursor-pointer"
+                      >
+                        <i data-lucide="x" class="w-2.5 h-2.5"></i> <span>Cancel</span>
+                      </button>
+                    </div>
+                  ` : ''}
+
+                  ${!isSeller && status === 'accepted' ? `
+                    <div class="mt-2.5 pt-2 border-t border-emerald-200/60">
+                      <a 
+                        href="${checkoutUrl}"
+                        class="w-full py-2 px-3 rounded-xl bg-gray-900 hover:bg-black text-white font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer text-center"
+                      >
+                        <i data-lucide="shopping-bag" class="w-3 h-3 text-amber-400"></i> Checkout at Offer Price →
+                      </a>
+                    </div>
+                  ` : ''}
+
+                  ${status === 'rejected' ? `
+                    <div class="mt-2 pt-1.5 border-t border-rose-200/60 text-[10px] font-medium text-rose-700 flex items-center gap-1">
+                      <i data-lucide="x-circle" class="w-3 h-3 text-rose-500"></i>
+                      <span>This offer was closed / declined.</span>
+                    </div>
+                  ` : ''}
+
+                  <span class="block text-[9px] mt-1.5 text-right text-gray-400">${time}</span>
+                </div>
+              </div>
+            `;
+          }
+
+          if (isSwap) {
+            const status = msg.actionStatus || (msg.text.includes('Accepted') ? 'accepted' : (msg.text.includes('Declined') ? 'rejected' : 'pending'));
+            const swapId = msg.swapId ? (msg.swapId._id ? String(msg.swapId._id) : String(msg.swapId)) : '';
+            const swapIdSafe = swapId.replace(/[^a-f0-9]/gi, '');
+
+            return `
+              <div class="w-full my-2">
+                <div class="rounded-2xl p-3 text-xs shadow-2xs border ${status === 'accepted' ? 'bg-emerald-50/80 border-emerald-200' : (status === 'rejected' ? 'bg-rose-50/80 border-rose-200' : 'bg-indigo-50/80 border-indigo-200')}">
+                  <div class="flex items-center justify-between pb-1.5 border-b ${status === 'accepted' ? 'border-emerald-200/60' : (status === 'rejected' ? 'border-rose-200/60' : 'border-indigo-200/60')}">
+                    <span class="font-extrabold flex items-center gap-1 ${status === 'accepted' ? 'text-emerald-900' : (status === 'rejected' ? 'text-rose-900' : 'text-indigo-950')}">
+                      <i data-lucide="repeat" class="w-3 h-3 text-indigo-600"></i> Swap Proposal
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${status === 'accepted' ? 'bg-emerald-200 text-emerald-800' : (status === 'rejected' ? 'bg-rose-200 text-rose-800' : 'bg-indigo-200 text-indigo-900 animate-pulse')}">
+                      ${status === 'accepted' ? '✓ Agreed' : (status === 'rejected' ? '✕ Declined' : '⏳ Pending')}
+                    </span>
+                  </div>
+
+                  <p class="mt-2 text-gray-800 leading-relaxed font-medium whitespace-pre-wrap">${msg.text}</p>
+
+                  ${isSeller && status === 'pending' && swapIdSafe ? `
+                    <div class="mt-2.5 pt-2 border-t border-indigo-200/60 flex items-center gap-2">
+                      <button 
+                        type="button" 
+                        data-swap-id="${swapIdSafe}"
+                        onclick="respondSwapFromChat(this.dataset.swapId, 'accept', this)"
+                        class="flex-1 py-1.5 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <i data-lucide="check" class="w-3 h-3"></i> <span>Accept Swap</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        data-swap-id="${swapIdSafe}"
+                        onclick="respondSwapFromChat(this.dataset.swapId, 'reject', this)"
+                        class="py-1.5 px-2.5 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <i data-lucide="x" class="w-3 h-3"></i> <span>Decline</span>
+                      </button>
+                    </div>
+                  ` : ''}
+
+                  ${!isSeller && status === 'pending' && swapIdSafe ? `
+                    <div class="mt-2 pt-2 border-t border-indigo-200/60 flex items-center justify-between">
+                      <span class="text-[10px] text-indigo-900 font-medium">⏳ Pending owner agreement</span>
+                      <button 
+                        type="button" 
+                        data-swap-id="${swapIdSafe}"
+                        onclick="respondSwapFromChat(this.dataset.swapId, 'cancel', this)"
+                        class="py-1 px-2.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-[10px] flex items-center gap-1 cursor-pointer"
+                      >
+                        <i data-lucide="x" class="w-2.5 h-2.5"></i> <span>Withdraw</span>
+                      </button>
+                    </div>
+                  ` : ''}
+
+                  ${status === 'rejected' ? `
+                    <div class="mt-2 pt-1.5 border-t border-rose-200/60 text-[10px] font-medium text-rose-700 flex items-center gap-1">
+                      <i data-lucide="x-circle" class="w-3 h-3 text-rose-500"></i>
+                      <span>This swap proposal was declined / closed.</span>
+                    </div>
+                  ` : ''}
+
+                  <span class="block text-[9px] mt-1.5 text-right text-gray-400">${time}</span>
+                </div>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="flex flex-col ${isMine ? 'items-end' : 'items-start'} my-1">
+              <div class="max-w-[80%] rounded-2xl px-3.5 py-2.5 shadow-2xs ${
+                isMine ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-bl-none'
+              }">
+                <p class="text-[10px] font-bold ${isMine ? 'text-indigo-200' : 'text-gray-400'} mb-0.5">${senderName}</p>
+                <p class="text-xs leading-relaxed break-words font-medium">${msg.text}</p>
+                <p class="text-[9px] text-right mt-1 ${isMine ? 'text-indigo-200' : 'text-gray-400'}">${time}</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      container.scrollTop = container.scrollHeight;
+      if (window.lucide) window.lucide.createIcons();
+
+    } catch (err) {
+      container.innerHTML = '<div class="text-center text-rose-500 py-4 font-semibold">Network error loading chat</div>';
+    }
+  };
+
+  window.sendChatMessage = async function(e) {
+    e.preventDefault();
+    const input = document.getElementById('chat-input-text');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    const listingId = '<%= listing._id %>';
+    const btn = document.getElementById('chat-send-btn');
+    if (btn) btn.disabled = true;
+
+    try {
+      const response = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ listingId, conversationId: chatConversationId, text })
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        input.value = '';
+        if (data.data && data.data.conversationId) {
+          chatConversationId = data.data.conversationId;
+        }
+        await loadChatMessages();
+      } else {
+        alert(data.message || 'Failed to send message');
+      }
+    } catch (err) {
+      alert('Network error sending message');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  };
+
+  // Direct In-Chat Action Handlers
+  window.respondOfferFromChat = async function(offerId, action, btn) {
+    if (!offerId || offerId === 'null') {
+      alert('Offer reference not found.');
+      return;
+    }
+    const verb = action === 'accept' ? 'Accepting...' : (action === 'cancel' ? 'Cancelling...' : 'Declining...');
+
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+      const span = btn.querySelector('span');
+      if (span) span.textContent = verb;
+    }
+
+    try {
+      const res = await fetch(`/api/offers/${offerId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: action === 'cancel' ? 'reject' : action })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        await loadChatMessages();
+      } else {
+        alert(data.message || 'Failed to respond to offer');
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50');
+          const span = btn.querySelector('span');
+          if (span) span.textContent = action === 'accept' ? 'Accept' : (action === 'cancel' ? 'Cancel' : 'Decline');
+        }
+      }
+    } catch (err) {
+      alert('Network error responding to offer');
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+        const span = btn.querySelector('span');
+        if (span) span.textContent = action === 'accept' ? 'Accept' : (action === 'cancel' ? 'Cancel' : 'Decline');
+      }
+    }
+  };
+
+  window.respondSwapFromChat = async function(swapId, action, btn) {
+    if (!swapId || !/^[a-f0-9]{24}$/i.test(swapId)) {
+      alert('Swap proposal reference not found.');
+      return;
+    }
+    const verb = action === 'accept' ? 'Accepting...' : (action === 'cancel' ? 'Withdrawing...' : 'Declining...');
+
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+      const span = btn.querySelector('span');
+      if (span) span.textContent = verb;
+    }
+
+    try {
+      let res = await fetch(`/api/swaps/${swapId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: action === 'cancel' ? 'reject' : action })
+      });
+      let data = await res.json();
+
+      if (!res.ok) {
+        res = await fetch(`/transactions/${swapId}/respond`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ action: action === 'cancel' ? 'reject' : action })
+        });
+        data = await res.json();
+      }
+
+      if (res.ok && data.success) {
+        await loadChatMessages();
+      } else {
+        alert(data.message || 'Failed to respond to swap proposal');
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50');
+          const span = btn.querySelector('span');
+          if (span) span.textContent = action === 'accept' ? 'Accept Swap' : (action === 'cancel' ? 'Withdraw' : 'Decline');
+        }
+      }
+    } catch (err) {
+      alert('Network error responding to swap proposal');
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+        const span = btn.querySelector('span');
+        if (span) span.textContent = action === 'accept' ? 'Accept Swap' : (action === 'cancel' ? 'Withdraw' : 'Decline');
+      }
+    }
+  };
+
+  // Price Offer Integration
+  window.openOfferModal = function() {
+    openModal('offer-modal');
+  };
+
+  window.submitPriceOffer = async function(e) {
+    e.preventDefault();
+    const listingId = '<%= listing._id %>';
+    const priceInput = document.getElementById('offer-price-input');
+    const msgInput = document.getElementById('offer-message-input');
+    const feedback = document.getElementById('offer-feedback');
+    const btn = document.getElementById('offer-submit-btn');
+
+    if (!priceInput || !priceInput.value) return;
+    const offeredPrice = priceInput.value;
+    const message = msgInput ? msgInput.value : '';
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Submitting Offer...';
+    }
+
+    try {
+      const response = await fetch('/api/offers', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ listingId, offeredPrice, message })
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to submit offer');
+      }
+
+      if (feedback) {
+        feedback.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 block';
+        feedback.textContent = '✓ ' + data.message;
+      }
+
+      setTimeout(() => {
+        closeModal('offer-modal');
+        window.location.reload();
+      }, 1200);
+
+    } catch (err) {
+      if (feedback) {
+        feedback.className = 'p-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 block';
+        feedback.textContent = 'Error: ' + err.message;
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Send Offer';
+      }
+    }
+  };
+
+  // Seller Respond to Offer
+  window.respondToOfferAction = async function(offerId, action) {
+    if (!confirm('Are you sure you want to ' + action + ' this offer?')) return;
+
+    try {
+      const response = await fetch('/api/offers/' + offerId + '/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert(data.message || 'Error processing response');
+      }
+    } catch (err) {
+      alert('Network error responding to offer');
+    }
+  };
+
+  // Seller Respond to Swap
+  window.respondToSwapAction = async function(swapId, action) {
+    if (action === 'accept' && !confirm('Accept this wardrobe swap? Both items will be reserved and an exchange delivery will be scheduled.')) return;
+    if (action === 'reject' && !confirm('Decline this swap offer?')) return;
+
+    try {
+      const response = await fetch('/api/swaps/' + swapId + '/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert(data.message || 'Error responding to swap');
+      }
+    } catch (err) {
+      alert('Network error responding to swap');
+    }
+  };
+
+  window.openCounterSwapModal = function(swapId, proposerName) {
+    const input = document.getElementById('counter-swap-id');
+    if (input) input.value = swapId;
+    openModal('counter-swap-modal');
+  };
+
+  window.submitCounterSwap = async function(e) {
+    e.preventDefault();
+    const swapIdEl = document.getElementById('counter-swap-id');
+    const cashInput = document.getElementById('counter-cash-input');
+    const noteInput = document.getElementById('counter-note-input');
+    const feedback = document.getElementById('counter-feedback');
+
+    const swapId = swapIdEl ? swapIdEl.value : '';
+    const counterCashTopUp = cashInput ? cashInput.value : 0;
+    const counterNote = noteInput ? noteInput.value : '';
+
+    try {
+      const response = await fetch('/api/swaps/' + swapId + '/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'counter',
+          counterCashTopUp,
+          counterNote
+        })
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to submit counter offer');
+      }
+
+      if (feedback) {
+        feedback.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 block';
+        feedback.textContent = '✓ Counter offer sent!';
+      }
+
+      setTimeout(() => {
+        closeModal('counter-swap-modal');
+        window.location.reload();
+      }, 1000);
+
+    } catch (err) {
+      if (feedback) {
+        feedback.className = 'p-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 block';
+        feedback.textContent = 'Error: ' + err.message;
+      }
+    }
+  };
+</script>
 
 <%- include('../../partials/footer') %>

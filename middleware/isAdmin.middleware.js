@@ -8,8 +8,8 @@ const isAdmin = (req, res, next) => {
         message: 'Authentication required'
       });
     }
-    req.flash('error', 'Please log in to access the administration portal.');
-    return res.redirect('/auth/login?redirect=/admin');
+    req.flash('error', 'Please log in to access the administrator portal.');
+    return res.redirect('/admin/login');
   }
 
   if (req.user.role !== ROLES.ADMIN) {

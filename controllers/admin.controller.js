@@ -2,7 +2,12 @@ const User = require('../models/User');
 const Listing = require('../models/Listing');
 const Category = require('../models/Category');
 const Transaction = require('../models/Transaction');
-const { ROLES, LISTING_STATUS, TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../config/constants');
+const Offer = require('../models/Offer');
+const SwapRequest = require('../models/SwapRequest');
+const Conversation = require('../models/Conversation');
+const Cart = require('../models/Cart');
+const LoyaltyTransaction = require('../models/LoyaltyTransaction');
+const { ROLES, LISTING_STATUS, TRANSACTION_TYPES, TRANSACTION_STATUS, ORDER_STATUSES, SWAP_REQUEST_STATUS } = require('../config/constants');
 
 // @desc Admin Dashboard Overview & Analytics
 exports.getDashboard = async (req, res, next) => {
@@ -420,6 +425,9 @@ exports.getTransactions = async (req, res, next) => {
       .populate('exchangeItemId')
       .populate('buyerId', 'name email')
       .populate('sellerId', 'name email')
+      .populate('shipments.item')
+      .populate('shipments.sender', 'name email')
+      .populate('shipments.receiver', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
@@ -437,6 +445,7 @@ exports.getTransactions = async (req, res, next) => {
       query: req.query,
       types: TRANSACTION_TYPES,
       statuses: TRANSACTION_STATUS,
+      orderStatuses: ORDER_STATUSES,
       pagination: { page: pageNum, totalPages, total, limit: limitNum }
     });
   } catch (error) {
@@ -444,8 +453,222 @@ exports.getTransactions = async (req, res, next) => {
   }
 };
 
+// @desc Update Order / Exchange Status (Admin Only)
+exports.updateOrderStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { orderStatus, note, shipmentTarget = 'all' } = req.body;
+
+    if (!orderStatus || !ORDER_STATUSES.includes(orderStatus)) {
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid order status. Allowed: ${ORDER_STATUSES.join(', ')}`
+        });
+      }
+      req.flash('error', 'Invalid order status selected.');
+      return res.redirect('/admin/transactions');
+    }
+
+    const transaction = await Transaction.findById(id)
+      .populate('listingId')
+      .populate('exchangeItemId')
+      .populate('buyerId', 'name email')
+      .populate('sellerId', 'name email')
+      .populate('shipments.item');
+
+    if (!transaction) {
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(404).json({ success: false, message: 'Transaction/Order not found' });
+      }
+      req.flash('error', 'Transaction not found.');
+      return res.redirect('/admin/transactions');
+    }
+
+    const isExchange = transaction.type === TRANSACTION_TYPES.EXCHANGE;
+    const hasTwoShipments = isExchange && transaction.shipments && transaction.shipments.length >= 2;
+
+    if (hasTwoShipments) {
+      // Independent shipment milestone updates
+      if (shipmentTarget === 'shipmentA' || shipmentTarget === '0') {
+        transaction.shipments[0].status = orderStatus;
+        transaction.shipments[0].statusHistory.push({
+          status: orderStatus,
+          note: (note || '').trim() || `Shipment A (${transaction.shipments[0].trackingNumber}) updated to ${orderStatus}`,
+          updatedAt: new Date(),
+          updatedBy: req.user._id
+        });
+      } else if (shipmentTarget === 'shipmentB' || shipmentTarget === '1') {
+        transaction.shipments[1].status = orderStatus;
+        transaction.shipments[1].statusHistory.push({
+          status: orderStatus,
+          note: (note || '').trim() || `Shipment B (${transaction.shipments[1].trackingNumber}) updated to ${orderStatus}`,
+          updatedAt: new Date(),
+          updatedBy: req.user._id
+        });
+      } else {
+        // Update both shipments
+        transaction.shipments.forEach((s, idx) => {
+          s.status = orderStatus;
+          s.statusHistory.push({
+            status: orderStatus,
+            note: (note || '').trim() || `Shipment ${idx === 0 ? 'A' : 'B'} (${s.trackingNumber}) updated to ${orderStatus}`,
+            updatedAt: new Date(),
+            updatedBy: req.user._id
+          });
+        });
+      }
+
+      // Check if BOTH shipments are now Delivered
+      const shipA = transaction.shipments[0];
+      const shipB = transaction.shipments[1];
+      const isADelivered = shipA.status === 'Delivered' || shipA.status === 'Completed';
+      const isBDelivered = shipB.status === 'Delivered' || shipB.status === 'Completed';
+
+      if (isADelivered && isBDelivered) {
+        // Both delivered: COMPLETE THE SWAP & TRANSFER OWNERSHIP (EXACTLY ONCE)
+        const wasAlreadyCompleted = transaction.status === TRANSACTION_STATUS.COMPLETED;
+        transaction.status = TRANSACTION_STATUS.COMPLETED;
+        transaction.orderStatus = 'Delivered';
+
+        if (!transaction.statusHistory) transaction.statusHistory = [];
+        transaction.statusHistory.push({
+          status: 'Delivered',
+          note: wasAlreadyCompleted
+            ? `Status re-confirmed as Delivered by Admin`
+            : 'Both shipments delivered! Swap completed and wardrobe ownership transferred.',
+          updatedAt: new Date(),
+          updatedBy: req.user._id
+        });
+
+        // Transfer ownership exactly once
+        if (!wasAlreadyCompleted) {
+          // 1. Product A (shipment A item): User A -> User B
+          // Product A's new owner/sellerId becomes User B (shipA.receiver)
+          if (shipA.item && shipA.receiver) {
+            const itemAId = shipA.item._id || shipA.item;
+            const newOwnerA = shipA.receiver._id || shipA.receiver;
+            const previousOwnerA = shipA.sender._id || shipA.sender;
+            const itemADoc = await Listing.findById(itemAId);
+            const origSellerA = itemADoc?.originalSellerId || itemADoc?.sellerId || previousOwnerA;
+
+            await Listing.findByIdAndUpdate(itemAId, {
+              sellerId: newOwnerA,
+              originalSellerId: origSellerA,
+              status: LISTING_STATUS.EXCHANGED,
+              $push: {
+                ownerHistory: {
+                  previousOwner: itemADoc?.sellerId || previousOwnerA,
+                  newOwner: newOwnerA,
+                  transferredAt: new Date(),
+                  transactionId: transaction._id,
+                  type: 'swap'
+                }
+              }
+            });
+          }
+
+          // 2. Product B (shipment B item): User B -> User A
+          // Product B's new owner/sellerId becomes User A (shipB.receiver)
+          if (shipB.item && shipB.receiver) {
+            const itemBId = shipB.item._id || shipB.item;
+            const newOwnerB = shipB.receiver._id || shipB.receiver;
+            const previousOwnerB = shipB.sender._id || shipB.sender;
+            const itemBDoc = await Listing.findById(itemBId);
+            const origSellerB = itemBDoc?.originalSellerId || itemBDoc?.sellerId || previousOwnerB;
+
+            await Listing.findByIdAndUpdate(itemBId, {
+              sellerId: newOwnerB,
+              originalSellerId: origSellerB,
+              status: LISTING_STATUS.EXCHANGED,
+              $push: {
+                ownerHistory: {
+                  previousOwner: itemBDoc?.sellerId || previousOwnerB,
+                  newOwner: newOwnerB,
+                  transferredAt: new Date(),
+                  transactionId: transaction._id,
+                  type: 'swap'
+                }
+              }
+            });
+          }
+
+          // 3. Mark SwapRequest completed if linked
+          if (transaction.swapRequestId) {
+            await SwapRequest.findByIdAndUpdate(transaction.swapRequestId, {
+              status: SWAP_REQUEST_STATUS.COMPLETED
+            });
+          }
+        }
+      } else if (orderStatus === 'Cancelled') {
+        transaction.status = TRANSACTION_STATUS.REJECTED;
+        transaction.orderStatus = 'Cancelled';
+        // Release listings back to approved
+        if (transaction.listingId) {
+          await Listing.findByIdAndUpdate(transaction.listingId._id || transaction.listingId, { status: LISTING_STATUS.APPROVED });
+        }
+        if (transaction.exchangeItemId) {
+          await Listing.findByIdAndUpdate(transaction.exchangeItemId._id || transaction.exchangeItemId, { status: LISTING_STATUS.APPROVED });
+        }
+      } else {
+        // Swap remains in progress until both are delivered
+        transaction.status = TRANSACTION_STATUS.ACCEPTED;
+        if (isADelivered || isBDelivered) {
+          transaction.orderStatus = 'Out for Delivery';
+        } else if (shipA.status === 'Out for Delivery' || shipB.status === 'Out for Delivery') {
+          transaction.orderStatus = 'Out for Delivery';
+        } else if (shipA.status === 'Dispatched' || shipB.status === 'Dispatched') {
+          transaction.orderStatus = 'Dispatched';
+        } else {
+          transaction.orderStatus = 'Confirmed';
+        }
+      }
+
+    } else {
+      // Direct Purchase or single shipment
+      transaction.orderStatus = orderStatus;
+
+      if (!transaction.statusHistory) {
+        transaction.statusHistory = [];
+      }
+      transaction.statusHistory.push({
+        status: orderStatus,
+        note: (note || '').trim(),
+        updatedAt: new Date(),
+        updatedBy: req.user._id
+      });
+
+      if (orderStatus === 'Completed' || orderStatus === 'Delivered') {
+        transaction.status = TRANSACTION_STATUS.COMPLETED;
+      } else if (orderStatus === 'Cancelled') {
+        transaction.status = TRANSACTION_STATUS.REJECTED;
+        if (transaction.listingId && transaction.listingId.status !== LISTING_STATUS.APPROVED) {
+          transaction.listingId.status = LISTING_STATUS.APPROVED;
+          await transaction.listingId.save();
+        }
+      }
+    }
+
+    await transaction.save();
+
+    if (req.originalUrl.startsWith('/api/')) {
+      return res.status(200).json({
+        success: true,
+        message: `Order #${transaction._id.toString().slice(-6).toUpperCase()} status updated to "${orderStatus}"`,
+        data: transaction
+      });
+    }
+
+    req.flash('success', `Order #${transaction._id.toString().slice(-6).toUpperCase()} status successfully updated to "${orderStatus}".`);
+    res.redirect('/admin/transactions');
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc Export Data as CSV
 exports.exportCSV = async (req, res, next) => {
+
   try {
     const { resource } = req.params;
 
@@ -491,6 +714,280 @@ exports.exportCSV = async (req, res, next) => {
 
     req.flash('error', 'Invalid report resource requested');
     res.redirect('/admin');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc Get Database Tables / Collections Hub and Inspector
+exports.getDatabaseTables = async (req, res, next) => {
+  try {
+    const tableSlug = req.params.tableName || null;
+
+    // Fetch live row/record counts for all 9 collections
+    const [
+      usersCount,
+      listingsCount,
+      categoriesCount,
+      transactionsCount,
+      offersCount,
+      swapRequestsCount,
+      conversationsCount,
+      cartsCount,
+      loyaltyTxCount
+    ] = await Promise.all([
+      User.countDocuments(),
+      Listing.countDocuments(),
+      Category.countDocuments(),
+      Transaction.countDocuments(),
+      Offer.countDocuments(),
+      SwapRequest.countDocuments(),
+      Conversation.countDocuments(),
+      Cart.countDocuments(),
+      LoyaltyTransaction.countDocuments()
+    ]);
+
+    const totalRecordsCount =
+      usersCount +
+      listingsCount +
+      categoriesCount +
+      transactionsCount +
+      offersCount +
+      swapRequestsCount +
+      conversationsCount +
+      cartsCount +
+      loyaltyTxCount;
+
+    // Calculate total loyalty points in circulation across users
+    const loyaltyAgg = await User.aggregate([
+      { $group: { _id: null, totalPoints: { $sum: '$loyaltyPoints' } } }
+    ]);
+    const totalLoyaltyPointsInCirculation = loyaltyAgg.length > 0 ? (loyaltyAgg[0].totalPoints || 0) : 0;
+
+    const tablesSummary = [
+      {
+        slug: 'users',
+        tableName: 'Users',
+        collectionName: 'users',
+        icon: 'users',
+        category: 'Identity & Auth',
+        badgeColor: 'bg-blue-100 text-blue-800',
+        count: usersCount,
+        fields: ['_id', 'name', 'email', 'role', 'loyaltyPoints', 'isBanned', 'createdAt'],
+        model: User
+      },
+      {
+        slug: 'listings',
+        tableName: 'Listings',
+        collectionName: 'listings',
+        icon: 'tag',
+        category: 'Marketplace Inventory',
+        badgeColor: 'bg-emerald-100 text-emerald-800',
+        count: listingsCount,
+        fields: ['_id', 'title', 'price', 'condition', 'category', 'status', 'type', 'sellerId', 'createdAt'],
+        model: Listing
+      },
+      {
+        slug: 'transactions',
+        tableName: 'Transactions & Orders',
+        collectionName: 'transactions',
+        icon: 'truck',
+        category: 'Orders & Tracking',
+        badgeColor: 'bg-indigo-100 text-indigo-800',
+        count: transactionsCount,
+        fields: ['_id', 'buyerId', 'sellerId', 'listingId', 'amount', 'orderStatus', 'trackingNumber', 'status', 'createdAt'],
+        model: Transaction
+      },
+      {
+        slug: 'swaprequests',
+        tableName: 'Item Swap Requests',
+        collectionName: 'swaprequests',
+        icon: 'repeat',
+        category: 'Barter System',
+        badgeColor: 'bg-purple-100 text-purple-800',
+        count: swapRequestsCount,
+        fields: ['_id', 'initiatorId', 'receiverId', 'offeredItemId', 'targetItemId', 'cashDifference', 'status', 'createdAt'],
+        model: SwapRequest
+      },
+      {
+        slug: 'offers',
+        tableName: 'Make an Offer Negotiations',
+        collectionName: 'offers',
+        icon: 'badge-percent',
+        category: 'Price Bargaining',
+        badgeColor: 'bg-amber-100 text-amber-800',
+        count: offersCount,
+        fields: ['_id', 'buyerId', 'sellerId', 'listingId', 'amount', 'status', 'counterAmount', 'createdAt'],
+        model: Offer
+      },
+      {
+        slug: 'loyaltytransactions',
+        tableName: 'Loyalty Points Ledger',
+        collectionName: 'loyaltytransactions',
+        icon: 'gift',
+        category: 'Rewards & Wallet',
+        badgeColor: 'bg-yellow-100 text-yellow-800',
+        count: loyaltyTxCount,
+        fields: ['_id', 'userId', 'type', 'points', 'amountEquivalent', 'balanceAfter', 'reason', 'createdAt'],
+        model: LoyaltyTransaction
+      },
+      {
+        slug: 'carts',
+        tableName: 'Shopping Bags / Carts',
+        collectionName: 'carts',
+        icon: 'shopping-cart',
+        category: 'Commerce Bag',
+        badgeColor: 'bg-rose-100 text-rose-800',
+        count: cartsCount,
+        fields: ['_id', 'userId', 'items', 'pointsToRedeem', 'updatedAt'],
+        model: Cart
+      },
+      {
+        slug: 'conversations',
+        tableName: 'Direct Messages & Chats',
+        collectionName: 'conversations',
+        icon: 'message-square',
+        category: 'User Communication',
+        badgeColor: 'bg-teal-100 text-teal-800',
+        count: conversationsCount,
+        fields: ['_id', 'participants', 'listingId', 'messages', 'updatedAt'],
+        model: Conversation
+      },
+      {
+        slug: 'categories',
+        tableName: 'Listing Categories',
+        collectionName: 'categories',
+        icon: 'folder-tree',
+        category: 'Catalog Taxonomy',
+        badgeColor: 'bg-gray-100 text-gray-800',
+        count: categoriesCount,
+        fields: ['_id', 'name', 'slug', 'description', 'image', 'createdAt'],
+        model: Category
+      }
+    ];
+
+    let selectedTable = null;
+    let selectedRecords = [];
+
+    if (tableSlug) {
+      const match = tablesSummary.find(t => t.slug.toLowerCase() === tableSlug.toLowerCase());
+      if (match) {
+        selectedTable = match;
+        selectedRecords = await match.model
+          .find()
+          .sort({ createdAt: -1 })
+          .limit(20)
+          .lean();
+      }
+    }
+
+    if (req.originalUrl.startsWith('/api/')) {
+      return res.status(200).json({
+        success: true,
+        tablesSummary: tablesSummary.map(t => ({
+          tableName: t.tableName,
+          slug: t.slug,
+          collectionName: t.collectionName,
+          category: t.category,
+          count: t.count,
+          fields: t.fields
+        })),
+        totalRecordsCount,
+        totalLoyaltyPointsInCirculation,
+        selectedTable: selectedTable ? selectedTable.tableName : null,
+        selectedRecords
+      });
+    }
+
+    res.render('pages/admin/tables', {
+      title: 'Database Tables & Collections - Styleswap Admin',
+      tablesSummary,
+      totalRecordsCount,
+      totalLoyaltyPointsInCirculation,
+      selectedTable,
+      selectedRecords,
+      user: req.user
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc Render Admin Portal Login Page
+exports.renderAdminLogin = (req, res) => {
+  if (req.user && req.user.role === ROLES.ADMIN) {
+    return res.redirect('/admin');
+  }
+  res.render('pages/admin/login', {
+    title: 'Admin Portal Login - Styleswap'
+  });
+};
+
+// @desc Process Admin Portal Login
+exports.adminLogin = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(401).json({ success: false, message: 'Invalid administrator credentials' });
+      }
+      req.flash('error', 'Invalid administrator credentials.');
+      return res.redirect('/admin/login');
+    }
+
+    if (user.role !== ROLES.ADMIN) {
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(403).json({ success: false, message: 'Forbidden. Administrator privileges required.' });
+      }
+      req.flash('error', 'Access denied. You do not have administrator permissions.');
+      return res.redirect('/admin/login');
+    }
+
+    if (user.isBanned) {
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(403).json({ success: false, message: 'Administrator account suspended.' });
+      }
+      req.flash('error', 'Administrator account suspended.');
+      return res.redirect('/admin/login');
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(401).json({ success: false, message: 'Invalid administrator credentials' });
+      }
+      req.flash('error', 'Invalid administrator credentials.');
+      return res.redirect('/admin/login');
+    }
+
+    const token = user.generateAuthToken();
+    const days = parseInt(process.env.COOKIE_EXPIRES_IN, 10) || 7;
+    res.cookie('token', token, {
+      expires: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production'
+    });
+
+    if (req.originalUrl.startsWith('/api/')) {
+      return res.status(200).json({
+        success: true,
+        message: 'Admin login successful',
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    }
+
+    req.flash('success', `Welcome back to Admin Control Center, ${user.name}!`);
+    return res.redirect('/admin');
   } catch (error) {
     next(error);
   }

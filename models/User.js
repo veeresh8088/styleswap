@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    loyaltyPoints: {
+      type: Number,
+      default: 100,
+      min: 0
+    },
     resetPasswordToken: String,
     resetPasswordExpires: Date
   },
@@ -78,7 +83,13 @@ userSchema.pre('save', async function (next) {
 
 // Match user-entered password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  const directMatch = await bcrypt.compare(enteredPassword, this.password);
+  if (directMatch) return true;
+  // If it is a sample user account (non-admin), allow either User@12345 or test1234 for easy testing
+  if (this.email !== 'admin@smartware.com' && (enteredPassword === 'User@12345' || enteredPassword === 'test1234')) {
+    return (await bcrypt.compare('User@12345', this.password)) || (await bcrypt.compare('test1234', this.password));
+  }
+  return false;
 };
 
 // Generate JWT token

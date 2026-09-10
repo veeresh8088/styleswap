@@ -1,10 +1,10 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const transactionController = require('../controllers/transaction.controller');
-const { protect } = require('../middleware/auth.middleware');
+const { protect, forbidAdmin } = require('../middleware/auth.middleware');
 
-// All checkout routes require authentication
-router.use(protect);
+// All checkout routes require authentication and regular user role
+router.use(protect, forbidAdmin);
 
 // Order Success Receipt Page
 router.get('/success/:transactionId', transactionController.renderOrderSuccess);

@@ -50,13 +50,42 @@ const ALL_SIZES = [
   'One Size / Standard'
 ];
 
+const ORDER_STATUSES = [
+  'Order Placed',
+  'Confirmed',
+  'Dispatched',
+  'Out for Delivery',
+  'Delivered',
+  'Cancelled'
+];
+
+const OFFER_STATUS = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  REJECTED: 'rejected',
+  CANCELLED: 'cancelled'
+};
+
+const SWAP_REQUEST_STATUS = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  REJECTED: 'rejected',
+  COUNTERED: 'countered',
+  CANCELLED: 'cancelled',
+  COMPLETED: 'completed'
+};
+
 module.exports = {
   ROLES,
   LISTING_TYPES,
   LISTING_STATUS,
   TRANSACTION_TYPES,
   TRANSACTION_STATUS,
+  ORDER_STATUSES,
+  OFFER_STATUS,
+  SWAP_REQUEST_STATUS,
   CONDITIONS,
   SIZES,
   ALL_SIZES
 };
+

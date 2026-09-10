@@ -8,6 +8,35 @@ const listingSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Listing must belong to a seller']
     },
+    originalSellerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    ownerHistory: [
+      {
+        previousOwner: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User'
+        },
+        newOwner: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User'
+        },
+        transferredAt: {
+          type: Date,
+          default: Date.now
+        },
+        transactionId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Transaction'
+        },
+        type: {
+          type: String,
+          default: 'swap'
+        }
+      }
+    ],
     title: {
       type: String,
       required: [true, 'Please provide a title for the listing'],

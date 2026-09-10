@@ -1,36 +1,88 @@
 const User = require('../models/User');
 const Listing = require('../models/Listing');
 const Transaction = require('../models/Transaction');
-const { LISTING_STATUS, TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../config/constants');
+const SwapRequest = require('../models/SwapRequest');
+const Offer = require('../models/Offer');
+const { LISTING_STATUS, TRANSACTION_TYPES, TRANSACTION_STATUS, SWAP_REQUEST_STATUS, OFFER_STATUS } = require('../config/constants');
 
-// @desc User Dashboard (Listings, Exchanges, Orders)
+// @desc User Dashboard (Listings, Exchanges, Orders, Price Offers)
 exports.getDashboard = async (req, res, next) => {
   try {
     const userId = req.user._id;
+    const isAdmin = req.user.role === 'admin';
 
-    // User's own listings
-    const myListings = await Listing.find({ sellerId: userId })
+    // User's own listings (or all for admin)
+    const myListings = await Listing.find(isAdmin ? {} : { sellerId: userId })
       .populate('category', 'name')
       .sort({ createdAt: -1 });
 
+    // Incoming price offers (offers made by buyers on user's listings, or all for admin)
+    const incomingOffers = await Offer.find(isAdmin ? {} : { sellerId: userId })
+      .populate('listingId')
+      .populate('buyerId', 'name email profileImage phone')
+      .populate('sellerId', 'name email profileImage phone')
+      .sort({ createdAt: -1 });
+
+    // Outgoing price offers (offers made by this user to other sellers)
+    const outgoingOffers = await Offer.find(isAdmin ? {} : { buyerId: userId })
+      .populate('listingId')
+      .populate('sellerId', 'name email profileImage phone')
+      .sort({ createdAt: -1 });
+
+    // Incoming swap requests (proposals from other users to swap with user's items)
+    const incomingSwapRequests = await SwapRequest.find(isAdmin ? {} : { receiverId: userId })
+      .populate('targetListingId')
+      .populate('offeredListingId')
+      .populate('proposerId', 'name email profileImage phone')
+      .populate('receiverId', 'name email profileImage phone')
+      .populate({
+        path: 'transactionId',
+        populate: [
+          { path: 'shipments.item' },
+          { path: 'shipments.sender', select: 'name email profileImage phone' },
+          { path: 'shipments.receiver', select: 'name email profileImage phone' }
+        ]
+      })
+      .sort({ createdAt: -1 });
+
+    // Outgoing swap requests (proposals made by user to other sellers)
+    const outgoingSwapRequests = await SwapRequest.find(isAdmin ? {} : { proposerId: userId })
+      .populate('targetListingId')
+      .populate('offeredListingId')
+      .populate('receiverId', 'name email profileImage phone')
+      .populate({
+        path: 'transactionId',
+        populate: [
+          { path: 'shipments.item' },
+          { path: 'shipments.sender', select: 'name email profileImage phone' },
+          { path: 'shipments.receiver', select: 'name email profileImage phone' }
+        ]
+      })
+      .sort({ createdAt: -1 });
+
     // Incoming exchange requests (others proposing to trade for user's items)
-    const incomingExchanges = await Transaction.find({
-      sellerId: userId,
-      type: TRANSACTION_TYPES.EXCHANGE
-    })
+    const incomingExchanges = await Transaction.find(
+      isAdmin ? { type: TRANSACTION_TYPES.EXCHANGE } : { sellerId: userId, type: TRANSACTION_TYPES.EXCHANGE }
+    )
       .populate('listingId')
       .populate('exchangeItemId')
       .populate('buyerId', 'name email profileImage phone')
+      .populate('sellerId', 'name email profileImage phone')
+      .populate('shipments.item')
+      .populate('shipments.sender', 'name email profileImage phone')
+      .populate('shipments.receiver', 'name email profileImage phone')
       .sort({ createdAt: -1 });
 
     // Outgoing exchange requests (user proposed to trade for others' items)
-    const outgoingExchanges = await Transaction.find({
-      buyerId: userId,
-      type: TRANSACTION_TYPES.EXCHANGE
-    })
+    const outgoingExchanges = await Transaction.find(
+      isAdmin ? { type: TRANSACTION_TYPES.EXCHANGE } : { buyerId: userId, type: TRANSACTION_TYPES.EXCHANGE }
+    )
       .populate('listingId')
       .populate('exchangeItemId')
       .populate('sellerId', 'name email profileImage')
+      .populate('shipments.item')
+      .populate('shipments.sender', 'name email profileImage phone')
+      .populate('shipments.receiver', 'name email profileImage phone')
       .sort({ createdAt: -1 });
 
     // User's purchases (items bought)
@@ -57,7 +109,9 @@ exports.getDashboard = async (req, res, next) => {
       activeListings: myListings.filter((l) => l.status === LISTING_STATUS.APPROVED).length,
       soldItems: myListings.filter((l) => l.status === LISTING_STATUS.SOLD).length,
       exchangedItems: myListings.filter((l) => l.status === LISTING_STATUS.EXCHANGED).length,
-      pendingIncomingExchanges: incomingExchanges.filter((e) => e.status === TRANSACTION_STATUS.PENDING).length
+      pendingIncomingOffers: incomingOffers.filter((o) => o.status === (OFFER_STATUS ? OFFER_STATUS.PENDING : 'pending')).length,
+      pendingIncomingExchanges: incomingExchanges.filter((e) => e.status === TRANSACTION_STATUS.PENDING).length +
+        incomingSwapRequests.filter((s) => s.status === SWAP_REQUEST_STATUS.PENDING).length
     };
 
     if (req.originalUrl.startsWith('/api/')) {
@@ -65,8 +119,12 @@ exports.getDashboard = async (req, res, next) => {
         success: true,
         stats,
         myListings,
+        incomingOffers,
+        outgoingOffers,
         incomingExchanges,
         outgoingExchanges,
+        incomingSwapRequests,
+        outgoingSwapRequests,
         purchases,
         sales
       });
@@ -77,8 +135,12 @@ exports.getDashboard = async (req, res, next) => {
       user: req.user,
       stats,
       myListings,
+      incomingOffers,
+      outgoingOffers,
       incomingExchanges,
       outgoingExchanges,
+      incomingSwapRequests,
+      outgoingSwapRequests,
       purchases,
       sales
     });

@@ -1,0 +1,265 @@
+<%- include('../partials/header') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-200 gap-4 mb-8">
+    <div>
+      <div class="flex items-center space-x-2 text-xs text-gray-500 font-medium mb-1">
+        <a href="/" class="hover:text-gray-900 transition-colors">Home</a>
+        <span>/</span>
+        <a href="/listings" class="hover:text-gray-900 transition-colors">Thrift Market</a>
+        <span>/</span>
+        <span class="text-gray-900 font-semibold">Shopping Bag</span>
+      </div>
+      <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-2.5">
+        <i data-lucide="shopping-bag" class="w-7 h-7 text-indigo-600"></i>
+        Your Thrift Bag (<%= cart.items.length %> <%= cart.items.length === 1 ? 'item' : 'items' %>)
+      </h1>
+    </div>
+
+    <a href="/listings" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-300 hover:bg-gray-50 text-xs font-bold text-gray-700 shadow-2xs transition-colors self-start sm:self-auto">
+      <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+      Continue Thrifting
+    </a>
+  </div>
+
+  <% if (cart.items && cart.items.length > 0) { %>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- LEFT: Items List (8 cols) -->
+      <div class="lg:col-span-8 space-y-4">
+        <% cart.items.forEach((item, index) => { %>
+          <% const piece = item.listingId; %>
+          <div class="bg-white rounded-3xl p-5 border border-gray-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 transition-all hover:border-gray-300">
+            
+            <div class="flex items-center space-x-4">
+              <a href="/listings/<%= piece._id %>" class="block flex-shrink-0">
+                <img 
+                  src="<%= piece.images && piece.images.length > 0 ? piece.images[0] : '/images/placeholder-item.jpg' %>" 
+                  alt="<%= piece.title %>"
+                  class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border border-gray-100 shadow-2xs"
+                  onerror="this.onerror=null;this.src='/images/placeholder-item.jpg';"
+                >
+              </a>
+
+              <div class="space-y-1">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider <%= piece.type === 'exchange' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-amber-50 text-amber-800 border border-amber-200' %>">
+                  <%= piece.type === 'exchange' ? 'Pure Barter' : 'Pre-Loved Buy' %>
+                </span>
+                <h3 class="font-display font-bold text-sm sm:text-base text-gray-900 leading-snug">
+                  <a href="/listings/<%= piece._id %>" class="hover:text-indigo-600 transition-colors">
+                    <%= piece.title %>
+                  </a>
+                </h3>
+                <p class="text-xs text-gray-500 font-medium">
+                  Size: <strong class="text-gray-800"><%= piece.size || 'Standard' %></strong> • 
+                  Condition: <strong class="text-gray-800"><%= piece.condition %></strong>
+                </p>
+                <p class="text-xs text-gray-500">
+                  Seller: <span class="font-bold text-gray-700"><%= piece.sellerId ? piece.sellerId.name : 'Styleswap Verified Member' %></span>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100 gap-2">
+              <div class="text-left sm:text-right">
+                <span class="text-lg sm:text-xl font-black text-gray-900 block">₹<%= Number(piece.price).toLocaleString('en-IN') %></span>
+                <span class="text-[10px] text-emerald-600 font-semibold block">Pan-India Verified</span>
+              </div>
+
+              <form action="/cart/remove/<%= piece._id %>" method="POST" class="inline">
+                <button 
+                  type="submit" 
+                  class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Remove from bag"
+                >
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  <span class="sm:hidden">Remove</span>
+                </button>
+              </form>
+            </div>
+
+          </div>
+        <% }) %>
+
+        <!-- Pan-India Assurance Banner -->
+        <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-center gap-3 text-xs text-indigo-950">
+          <i data-lucide="shield-check" class="w-5 h-5 text-indigo-600 flex-shrink-0"></i>
+          <div>
+            <strong class="font-bold">100% Insured Second-Hand Delivery:</strong> All orders undergo doorstep courier verification and are protected with a 24-hour dispute guarantee.
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Loyalty Points & Order Summary (4 cols) -->
+      <div class="lg:col-span-4 space-y-6">
+
+        <!-- 1. Loyalty Points Redemption Box -->
+        <div class="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-3xl p-6 border border-amber-200/80 shadow-xs space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-amber-200/60">
+            <div class="flex items-center space-x-2">
+              <span class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-sm shadow-xs">⭐</span>
+              <div>
+                <h3 class="font-display font-extrabold text-sm text-amber-950">Styleswap Loyalty Points</h3>
+                <p class="text-[11px] text-amber-800">Rule: <strong>10 Points = ₹100 Discount</strong> (₹10/pt)</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white/80 backdrop-blur-xs p-3.5 rounded-2xl border border-amber-200/60 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Your Points Balance</span>
+              <span class="text-xl font-black text-amber-600"><%= userPoints %> Pts</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Equivalent Value</span>
+              <span class="text-sm font-extrabold text-emerald-700">₹<%= ((userPoints / 10) * 100).toLocaleString('en-IN') %> Off</span>
+            </div>
+          </div>
+
+          <form action="/cart/apply-points" method="POST" class="space-y-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-amber-950">
+              Redeem Points on this Order:
+            </label>
+            <div class="flex items-center gap-2">
+              <div class="relative flex-1">
+                <input 
+                  type="number" 
+                  name="points" 
+                  id="loyalty-points-input"
+                  min="0" 
+                  max="<%= Math.min(userPoints, Math.floor(subtotal / 10)) %>"
+                  step="10"
+                  value="<%= pointsToRedeem %>" 
+                  class="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600"
+                  placeholder="e.g. 10, 20..."
+                >
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-800">pts</span>
+              </div>
+              <button 
+                type="submit" 
+                class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              >
+                Apply
+              </button>
+            </div>
+
+            <!-- Quick Points Buttons -->
+            <div class="flex items-center gap-1.5 flex-wrap pt-1">
+              <span class="text-[10px] font-bold text-amber-900">Quick:</span>
+              <% if (userPoints >= 10) { %>
+                <button type="button" onclick="setPoints(10)" class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 cursor-pointer">10 pts (-₹100)</button>
+              <% } %>
+              <% if (userPoints >= 20) { %>
+                <button type="button" onclick="setPoints(20)" class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 cursor-pointer">20 pts (-₹200)</button>
+              <% } %>
+              <% if (userPoints >= 50) { %>
+                <button type="button" onclick="setPoints(50)" class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 cursor-pointer">50 pts (-₹500)</button>
+              <% } %>
+              <% const maxPoints = Math.min(userPoints, Math.floor(subtotal / 10)); %>
+              <% if (maxPoints > 0) { %>
+                <button type="button" onclick="setPoints(<%= maxPoints %>)" class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-200 text-amber-950 hover:bg-amber-300 cursor-pointer">Max (<%= maxPoints %> pts)</button>
+              <% } %>
+              <button type="button" onclick="setPoints(0)" class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-gray-700 cursor-pointer">Clear</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 2. Cost Breakdown Card -->
+        <div class="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs space-y-4">
+          <h3 class="font-display font-bold text-base text-gray-900 pb-3 border-b border-gray-100">
+            Order Summary (₹)
+          </h3>
+
+          <div class="space-y-2.5 text-xs">
+            <div class="flex items-center justify-between text-gray-600">
+              <span>Items Subtotal (<%= cart.items.length %>)</span>
+              <span class="font-bold text-gray-900">₹<%= Number(subtotal).toLocaleString('en-IN') %></span>
+            </div>
+
+            <% if (pointsDiscount > 0) { %>
+              <div class="flex items-center justify-between text-amber-700 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-100">
+                <span class="flex items-center gap-1">
+                  ⭐ Loyalty Discount (<%= pointsToRedeem %> pts)
+                </span>
+                <span>-₹<%= Number(pointsDiscount).toLocaleString('en-IN') %></span>
+              </div>
+            <% } %>
+
+            <div class="flex items-center justify-between text-gray-600">
+              <span>Pan-India Courier Delivery</span>
+              <% if (shippingFee === 0) { %>
+                <span class="font-bold text-emerald-600 uppercase text-[11px] bg-emerald-50 px-2 py-0.5 rounded">FREE (Order > ₹999)</span>
+              <% } else { %>
+                <span class="font-bold text-gray-900">₹<%= shippingFee %></span>
+              <% } %>
+            </div>
+
+            <div class="flex items-center justify-between text-gray-600">
+              <span class="flex items-center gap-1">
+                24-Hour Buyer Assurance
+                <i data-lucide="info" class="w-3.5 h-3.5 text-gray-400" title="Covers verification and return guarantee"></i>
+              </span>
+              <span class="font-bold text-gray-900">₹<%= protectionFee %></span>
+            </div>
+
+            <div class="pt-3 border-t border-gray-100 flex items-baseline justify-between">
+              <div>
+                <span class="font-extrabold text-sm text-gray-900 block">Total Payable</span>
+                <span class="text-[10px] text-gray-400">Includes all GST & Courier</span>
+              </div>
+              <span class="text-2xl font-black text-gray-900">₹<%= Number(totalAmount).toLocaleString('en-IN') %></span>
+            </div>
+          </div>
+
+          <!-- Checkout CTA -->
+          <a 
+            href="/cart/checkout" 
+            class="w-full py-4 rounded-2xl bg-gray-900 hover:bg-black text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
+          >
+            <i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i>
+            <span>Proceed to Secure Checkout</span>
+          </a>
+
+          <div class="text-center text-[11px] text-gray-400 flex items-center justify-center gap-2 pt-1">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500"></i>
+            UPI • Debit/Credit Cards • Cash on Delivery (COD)
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  <% } else { %>
+    <!-- Empty Cart State -->
+    <div class="bg-white rounded-3xl p-12 sm:p-20 text-center border border-gray-200 space-y-5 max-w-2xl mx-auto shadow-xs">
+      <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xs">
+        <i data-lucide="shopping-bag" class="w-10 h-10"></i>
+      </div>
+      <div class="space-y-1">
+        <h2 class="font-display font-extrabold text-2xl text-gray-900">Your Thrift Bag is Empty</h2>
+        <p class="text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
+          Explore thousands of verified second-hand branded clothes, vintage jackets, oversized tees, and streetwear at unbeatable prices in ₹.
+        </p>
+      </div>
+      <div class="pt-3 flex items-center justify-center gap-3">
+        <a href="/listings" class="px-6 py-3 rounded-2xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-md transition-colors flex items-center gap-2">
+          <i data-lucide="grid" class="w-4 h-4"></i> Browse Thrift Market
+        </a>
+      </div>
+    </div>
+  <% } %>
+
+</div>
+
+<script>
+  function setPoints(pts) {
+    const input = document.getElementById('loyalty-points-input');
+    if (input) {
+      input.value = pts;
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>
