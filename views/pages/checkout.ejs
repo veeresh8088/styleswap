@@ -76,7 +76,7 @@
                 name="phone" 
                 required 
                 maxlength="10"
-                value="<%= currentUser && currentUser.phone ? currentUser.phone.replace('+91', '').trim() : '9876543210' %>" 
+                value="<%= currentUser && currentUser.phone ? currentUser.phone.replace('+91', '').trim() : '' %>" 
                 placeholder="98765 43210" 
                 class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
               >
@@ -91,7 +91,7 @@
               required 
               placeholder="e.g. Flat 402, Green Glen Layout, Bellandur OR Sector 15, Near Metro..." 
               class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
-            ><%= currentUser && currentUser.address ? currentUser.address : (currentUser && currentUser.formattedAddress ? currentUser.formattedAddress : 'B-402, Silver Birch Apts, Outer Ring Road') %></textarea>
+            ></textarea>
           </div>
 
           <div class="sm:col-span-1">
@@ -100,7 +100,7 @@
               type="text" 
               name="city" 
               required 
-              value="<%= currentUser && currentUser.city ? currentUser.city : 'Bengaluru' %>" 
+              value="" 
               placeholder="e.g. Bengaluru, Mumbai, Delhi" 
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
             >
@@ -113,9 +113,10 @@
               required 
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
             >
+              <option value="">Select State</option>
               <% const states = ['Karnataka', 'Maharashtra', 'Delhi NCR', 'Gujarat', 'Telangana', 'Tamil Nadu', 'West Bengal', 'Rajasthan', 'Uttar Pradesh', 'Kerala', 'Punjab', 'Haryana', 'Madhya Pradesh', 'Goa', 'Chandigarh', 'Other']; %>
               <% states.forEach(st => { %>
-                <option value="<%= st %>" <%= (currentUser && currentUser.state === st) || st === 'Karnataka' ? 'selected' : '' %>><%= st %></option>
+                <option value="<%= st %>"><%= st %></option>
               <% }) %>
             </select>
           </div>
@@ -127,7 +128,7 @@
               name="pincode" 
               required 
               maxlength="6"
-              value="<%= currentUser && currentUser.pincode ? currentUser.pincode : '560103' %>" 
+              value="" 
               placeholder="e.g. 560103" 
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
             >
